@@ -36,7 +36,9 @@ def feet2meters(feet: float) -> float:
     """Convert feet to meters"""
     return feet * 0.3048
 
-
+def inches2meters(inches: float) -> float:
+    """Convert inches to meters"""
+    return inches * 0.0254
 def meters2feet(meters: float) -> float:
     """Convert meters to feet"""
     return meters / 0.3048
