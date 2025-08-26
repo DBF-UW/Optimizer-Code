@@ -19,10 +19,9 @@ class Aircraft:
         self.AR = self.span/self.chord
         self.wing_area = self.span * self.chord
         self.airfoil = asb.Airfoil(airfoil)
-        self.CL_max = self.airfoil.CL_max
+        self.CL_max = 1.6
 
         #Flight Parameters
-        self.max_load_factor = opti.variable(init_guess=4, lower_bound=1)
 
         # AP Parameters
         self.propulsion_energy = opti.variable(init_guess=100*3600)
@@ -35,26 +34,26 @@ class Aircraft:
         self.flight_mass = self.empty_mass + self.battery_mass
 
     
-    def getWingMass(self, max_load_factor, mass):
-        wing_area = self.wing_area
-        wing_surface_mass = constants.WING_SURFACE_DENSITY * wing_area  # kg/m^2
-        structural_safety_factor = constants.STRUCTURAL_SAFETY_FACTOR  # unitless
-        wing_structure_mass = (mass * max_load_factor * 0.1) * structural_safety_factor + wing_surface_mass # kg
-
-    def getDrag(self, airspeed, load_factor):
-        q = 0.5 * constants.RHO * airspeed**2 # Dynamic pressure
-        lift = load_factor * self.mass * constants.GRAVITATIONAL_ACCELERATION
-        CL = lift / (q * self.wing_area) 
-        CD0 = 0.02  # Parasite drag coefficient, assumed constant
-        e = 0.8  # Oswald efficiency factor, assumed constant
-        CDi = CL**2 / (np.pi * e * self.AR)  # Induced drag coefficient
-        CD = CD0 + CDi
-        D = CD * q * self.S
-        return D
+    def getQ (self, speed):
+        rho = constants.RHO
+        return 0.5 * rho * speed**2
     
-    def getCL(self, airspeed, load_factor):
-        q = 0.5 * constants.RHO * airspeed**2 # Dynamic pressure
-        lift = load_factor * self.mass * constants.GRAVITATIONAL_ACCELERATION
-        CL = lift / (q * self.wing_area) 
-        return CL
+    def getCL (self, speed, load_factor, payload:bool):
+        if payload:
+            total_mass = self.flight_mass + self.payload_mass
+        else:
+            total_mass = self.flight_mass
+        weight = total_mass * constants.GRAVITATIONAL_ACCELERATION
+        q = self.getQ(speed)
+        return weight * load_factor / (q * self.wing_area)
+    
+    def getDrag (self, speed, load_factor, payload:bool):
+        CL = self.getCL(speed, load_factor, payload)
+        CD0 = 0.025
+        e = 0.8 # Oswald efficiency factor
+        AR = self.AR   
+        k = 1 / (np.pi * e * AR)
+        CD = CD0 + k * CL**2
+        q = self.getQ(speed)   
+        return CD * q * self.wing_area                                      
     
