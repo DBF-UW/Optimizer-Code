@@ -12,15 +12,12 @@ GRAVITATIONAL_ACCELERATION = 9.80665  # m/s^2
 EARTH_RADIUS = 6371e3  # meters
 R = 287.05  # J/(kg*K) gas constant for dry air
 PS = 101325  # Pa standard pressure
-RHOS = 1.225  # kg/m^3 standard density
+RHO = 1.225  # kg/m^3 standard density
 TS = 288.15  # K standard temperature
 SPECIFIC_HEAT_AIR_CONSTANT_PRESSURE = 1004  # J/(kg*K)
 SPECIFIC_HEAT_AIR_CONSTANT_VOLUME = 717  # J/(kg*K)
 
 # =========== ENVIROMENTAL CONSTANTS ========
-RHO = 0.0021 # slug/ft3
-T = 72.3238 # F
-MU_ROLL = 0.05 # unitless
 
 # =========== MATERIAL CONSTANTS ===========
 PINK_FOAM_DENSITY = 23.637083912 # kg/m^3
@@ -28,13 +25,23 @@ LOAD_FACTOR_LIMIT = 8 # g's
 
 # =========== A&P CONSTANTS ============
 PROPULSION_EFFICIENCY = 0.75 # unitless
-BATTERY_ENERGY = 100  # Wh/kg
+BATTERY_ENERGY = 100  # Wh
 MOTOR_MASS = 0.5  # kg
 LG_MASS = 0.5  # kg
 BATTERY_SPECIFIC_ENERGY = 500000 # Wh/kg
+
+# =========== Mission Constants ===========
+PASSENGER_INCOME_FIXED = 6  # $/passenger
+PASSENGER_INCOME_LAP = 2  # $/passenger/lap
+CARGO_INCOME_FIXED = 10  # $/cargo
+CARGO_INCOME_LAP = 8  # $/cargo/lap
+BASE_OPERATING_COST = 10  # $/lap
+PER_PASSENGER_COST = 0.5  # $/passenger/lap
+PER_CARGO_COST = 2  # $/cargo/lap
 # =========== STRUCTURAL CONSTANTS ========
 STRUCTURAL_SAFETY_FACTOR = 1.5  # unitless
 WING_SURFACE_DENSITY = 2  # kg/m^2
+
 # =========== 2024-2025 DBF REQS ===========
 AIAA_LENGTH = 1000 # ft
 
@@ -55,8 +62,8 @@ CE = 10
 CP = 0.5
 CC = 2
 EF = 1
-PASSENGER_MASS = 0.02 # N
-CARGO_MASS = 0.170 # N
+PASSENGER_MASS = 0.05 # KG
+CARGO_MASS = 0.170 # KG
 
 # Mission 3
 MISSION_3_TIME = 300 #Seconds
