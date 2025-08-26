@@ -32,12 +32,14 @@ def constraints(opti:asb.Opti, aircraft:"Aircraft") -> None:
     passengers = aircraft.passengers
     cargo = aircraft.cargo
     span = aircraft.span
+    propulsion_energy = aircraft.propulsion_energy
     airfoil = aircraft.airfoil
 
     # assign constraints as list
     opti.subject_to([
         span <= uc.feet2meters(constants.MAX_WING_SPAN),
         span >= uc.feet2meters(constants.MIN_WING_SPAN),
+        propulsion_energy <= constants.MAX_BATTERY_ENERGY * 3600, #convert to Joules
         banner_length > uc.inches2meters(10), # minimum banner length
         passengers / cargo >= 3, #from AIAA rules
         passengers > 3, #from AIAA rules

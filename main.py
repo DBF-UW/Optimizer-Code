@@ -4,7 +4,7 @@ import constants
 import unit_conversion  as uc   
 import aircraft
 import constraints
-import lap_simulator    
+import simple_lap_simulator    
 
 opti = asb.Opti()
 airfoil_name = "naca2412"  # or any valid airfoil string
@@ -12,7 +12,6 @@ airfoil_name = "naca2412"  # or any valid airfoil string
 mantaRay = aircraft.Aircraft(opti, airfoil_name)
 print(mantaRay.span)
 constraints.constraints(opti, mantaRay)
+lapper = simple_lap_simulator.LapSimulator(opti, mantaRay, payload=True)
 solution = opti.solve()
-for i in range(opti.x.shape[0]):
-    var = opti.x[i]
-    print(f"{var.name()}: {solution.value(var)}")
+print(solution.value(lapper.lap_time))  # Prints the numeric value of self.mass
