@@ -38,6 +38,14 @@ CARGO_INCOME_LAP = 8  # $/cargo/lap
 BASE_OPERATING_COST = 10  # $/lap
 PER_PASSENGER_COST = 0.5  # $/passenger/lap
 PER_CARGO_COST = 2  # $/cargo/lap
+
+DUCK_WIDTH = 0.0584 #meters
+DUCK_HEIGHT =  0.0635 #meters
+DUCK_LENGTH = 0.0635 #meters
+
+PUCK_THICKNESS = 0.0254 #meters
+PUCK_DIAMETER = 0.0762 #meters
+PUCK_PACKING_COEFFICEINT = 0.65 #unitless
 # =========== STRUCTURAL CONSTANTS ========
 STRUCTURAL_SAFETY_FACTOR = 1.5  # unitless
 WING_SURFACE_DENSITY = 2  # kg/m^2

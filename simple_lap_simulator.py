@@ -31,6 +31,8 @@ class LapSimulator:
         opti.subject_to([
             self.straight_CL <= aircraft.CL_max,
             self.turn_CL <= aircraft.CL_max,
+            self.laps_flown >= 3,
+            self.turn_radius <= 15,
             self.lap_energy*self.laps_flown <= aircraft.propulsion_energy, #total energy used must be less than battery energy
             self.lap_time*self.laps_flown <= 300, #5 minute flight time
         ])
