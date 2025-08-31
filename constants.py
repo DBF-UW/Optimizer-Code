@@ -13,6 +13,7 @@ EARTH_RADIUS = 6371e3  # meters
 R = 287.05  # J/(kg*K) gas constant for dry air
 PS = 101325  # Pa standard pressure
 RHO = 1.225  # kg/m^3 standard density
+MEW = 1.802 * 10**-5 #kg/m*s dynamic viscosity
 TS = 288.15  # K standard temperature
 SPECIFIC_HEAT_AIR_CONSTANT_PRESSURE = 1004  # J/(kg*K)
 SPECIFIC_HEAT_AIR_CONSTANT_VOLUME = 717  # J/(kg*K)

@@ -24,26 +24,24 @@ class Aircraft:
         self.passenger_area = self.passengers*constants.DUCK_LENGTH*constants.DUCK_WIDTH #m^2
         passenger_volume = self.passenger_area*constants.DUCK_HEIGHT
         puck_volume = (3.14*(constants.PUCK_DIAMETER/2)**2)*constants.PUCK_THICKNESS/constants.PUCK_PACKING_COEFFICEINT
-        total_volume = (puck_volume + passenger_volume)/0.7 + 0.05*0.05*0.15*2
+        total_volume = ((puck_volume + passenger_volume)/0.7 + 0.05*0.05*0.15*2)/0.8
 
         self.fuselage_length = opti.variable(init_guess=1.5)
         self.fuselage_width = self.passenger_area/self.fuselage_length
         self.fuselage_height = total_volume/(self.fuselage_length*self.fuselage_width)
 
         self.frontal_area = self.fuselage_height * self.fuselage_width
-        self.effective_diameter = 
+        self.effective_diameter = np.sqrt(self.frontal_area/3.14)*2
         self.fineness_ratio = self.fuselage_length/self.effective_diameter
         
        
-        self.wetted_area = (
+        self.fuselage_wetted_area = (
                             2*(self.fuselage_height * self.fuselage_width) + #front/back
                             2*(self.fuselage_height * self.fuselage_length) + #sides
                             2*(self.fuselage_width * self.fuselage_length)) #tops
                             
-        self.CDFrontal = 0.05
-        self.CDWetted = 0.015
-        self.CDBanner = 0.03
-        self.CD0 = 0.02
+        self.CD_banner = 0.03
+        self.CD0_wing = 0.02
         
 
         # AP Parameters
@@ -67,6 +65,9 @@ class Aircraft:
         Q = 0.5 * rho * (speed**2)
         return Q
     
+    def getReynolds (self, speed, length): 
+        return (constants.RHO * speed * length / constants.MEW)
+    
     def getCL (self, speed, load_factor, payload:bool):
         total_mass = self.getTotalMass(payload)
         weight = total_mass * constants.GRAVITATIONAL_ACCELERATION
@@ -74,20 +75,36 @@ class Aircraft:
         self.speed = speed
         return weight * load_factor / (self.q * self.wing_area)
     
+    def getFuselageCD0 (self, speed, reference_area): #returns CD relative to given reference area. References https://aerotoolbox.com/drag-polar/, 
+        L = self.fuselage_length
+        D = self.effective_diameter
+        Re = self.getReynolds(speed, L)
+        skin_friction = 0.0391 * Re**(-0.157) #Skin friction references https://aerotoolbox.com/skin-friction/, possible issue with opti?
+        return skin_friction * (1 + (60/((L/D)**3)) + 0.0025 * (L/D)) * self.fuselage_wetted_area / reference_area
+
     def getLift (self, speed, load_factor, payload:bool, banner:bool):
          CL = self.getCL(speed, load_factor, payload)
          q = self.getQ(speed)
          return q*CL*self.wing_area
     
     def getDrag (self, speed, load_factor, payload:bool, banner:bool):
+        #get basic parameters
+        S = self.wing_area
+        AR = self.AR  #aspect ratio
+        Q = self.getQ(speed) #dynamic pressure 
+       
+        #Calculate Wing Total Drag Coefficient (Reference area is the wing planform, not wing wetted). Uses lifting line theory
         CL = self.getCL(speed, load_factor, payload)
         e = 0.7 # Oswald efficiency factor
-        AR = self.AR   
-        k = 1 / (np.pi * e * AR)
+        k = 1 / (np.pi * e * AR) #induced drag term
         CD_Wing = self.CD0 + k * CL**2
-        q = self.getQ(speed)   
-        aircraft_drag = q * (CD_Wing * self.wing_area + self.frontal_area * self.CDFrontal + self.wetted_area * self.CDWetted) 
-        banner_drag = q * (self.CDBanner * self.banner_length**2)/5
+
+        #Get fuselage drag coefficient (reference area is the wing planform again)
+        CD_Fuselage = self.getFuselageCD0(speed, S) 
+
+        #Calculate Drag Forces
+        aircraft_drag = Q * S * (CD_Fuselage + CD_Wing) 
+        banner_drag = Q * (self.CDBanner * self.banner_length**2)/5
         if banner:
             return aircraft_drag + banner_drag
         else:
