@@ -8,8 +8,8 @@ class Aircraft:
     def __init__(self, opti:asb.Opti, airfoil):
 
         # Mission Parameters
-        self.passengers = opti.variable(init_guess=6, lower_bound=3, upper_bound=500)  
-        self.cargo = opti.variable(init_guess=2, lower_bound=1, upper_bound=500)
+        self.passengers = opti.variable(init_guess=3, lower_bound=3, upper_bound=500)  
+        self.cargo = opti.variable(init_guess=1, lower_bound=1, upper_bound=500)
         self.banner_length = opti.variable(init_guess = uc.inches2meters(10), lower_bound=0.1)
 
         # Wing Parameters
@@ -18,14 +18,32 @@ class Aircraft:
         self.AR = self.span/self.chord
         self.wing_area = self.span * self.chord
         self.airfoil = asb.Airfoil(airfoil)
-        self.CL_max = 1.6
+        self.CL_max = 1
 
         #Fuselage Parameters
-        passenger_area = self.passengers*constants.DUCK_LENGTH*constants.DUCK_WIDTH #m^2
-        passenger_volume = duck_area*constants.DUCK_HEIGHT
-        
+        self.passenger_area = self.passengers*constants.DUCK_LENGTH*constants.DUCK_WIDTH #m^2
+        passenger_volume = self.passenger_area*constants.DUCK_HEIGHT
+        puck_volume = (3.14*(constants.PUCK_DIAMETER/2)**2)*constants.PUCK_THICKNESS/constants.PUCK_PACKING_COEFFICEINT
+        total_volume = (puck_volume + passenger_volume)/0.7 + 0.05*0.05*0.15*2
+
         self.fuselage_length = opti.variable(init_guess=1.5)
-        self.fuselage_width = passenger_area/self.fuselage_length
+        self.fuselage_width = self.passenger_area/self.fuselage_length
+        self.fuselage_height = total_volume/(self.fuselage_length*self.fuselage_width)
+
+        self.frontal_area = self.fuselage_height * self.fuselage_width
+        self.effective_diameter = 
+        self.fineness_ratio = self.fuselage_length/self.effective_diameter
+        
+       
+        self.wetted_area = (
+                            2*(self.fuselage_height * self.fuselage_width) + #front/back
+                            2*(self.fuselage_height * self.fuselage_length) + #sides
+                            2*(self.fuselage_width * self.fuselage_length)) #tops
+                            
+        self.CDFrontal = 0.05
+        self.CDWetted = 0.015
+        self.CDBanner = 0.03
+        self.CD0 = 0.02
         
 
         # AP Parameters
@@ -56,13 +74,22 @@ class Aircraft:
         self.speed = speed
         return weight * load_factor / (self.q * self.wing_area)
     
-    def getDrag (self, speed, load_factor, payload:bool):
+    def getLift (self, speed, load_factor, payload:bool, banner:bool):
+         CL = self.getCL(speed, load_factor, payload)
+         q = self.getQ(speed)
+         return q*CL*self.wing_area
+    
+    def getDrag (self, speed, load_factor, payload:bool, banner:bool):
         CL = self.getCL(speed, load_factor, payload)
-        CD0 = 0.02
-        e = 0.8 # Oswald efficiency factor
+        e = 0.7 # Oswald efficiency factor
         AR = self.AR   
         k = 1 / (np.pi * e * AR)
-        CD = CD0 + k * CL**2
+        CD_Wing = self.CD0 + k * CL**2
         q = self.getQ(speed)   
-        return CD * q * self.wing_area                                      
+        aircraft_drag = q * (CD_Wing * self.wing_area + self.frontal_area * self.CDFrontal + self.wetted_area * self.CDWetted) 
+        banner_drag = q * (self.CDBanner * self.banner_length**2)/5
+        if banner:
+            return aircraft_drag + banner_drag
+        else:
+            return aircraft_drag                           
     

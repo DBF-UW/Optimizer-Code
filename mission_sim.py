@@ -6,6 +6,12 @@ import aircraft
 import constraints
 import simple_lap_simulator
 
+max_M2_score = 2200
+max_M3_score = 2
+
+def GM (aircraft:"aircraft.Aircraft"):
+    return (1.5 * (aircraft.cargo + aircraft.passengers)) + 15
+
 def M1 (aircraft:"aircraft.Aircraft", lapper:"simple_lap_simulator.LapSimulator") -> float:
     return 1
 
@@ -29,11 +35,11 @@ def M2 (aircraft:"aircraft.Aircraft", lapper:"simple_lap_simulator.LapSimulator"
     cost = laps * (Ce + (passengers * Cp) + (cargo * Cc)) * efficiencyFactor
 
     net_income = income - cost
-    return net_income + 1
+    return net_income
 
 def M3 (aircraft:"aircraft.Aircraft", lapper:"simple_lap_simulator.LapSimulator") -> float:
     RAC = 0.05 * aircraft.span + 0.75
     laps = lapper.laps_flown
     banner_length = aircraft.banner_length
     score = (banner_length * laps) / RAC
-    return 2 + score
+    return score
