@@ -39,25 +39,40 @@ def constraints(opti:asb.Opti, aircraft:"Aircraft") -> None:
     fuselage_length = aircraft.fuselage_length
     fuselage_width = aircraft.fuselage_width
     fuselage_height = aircraft.fuselage_height
+    fuselage_volume_requirement = aircraft.total_volume
+    fuselage_floor_space_requirement = aircraft.passenger_area
+
+
 
     # assign constraints as list
     opti.subject_to([
 
-        #AC Configuration Constraints
+        #AC Configuration Constraints:
+
+        #Wing
         span <= uc.feet2meters(constants.MAX_WING_SPAN),
         span >= uc.feet2meters(constants.MIN_WING_SPAN),
         AR >= 4, #minimum AR
         AR <= 12, #maximum AR
+
+        #AP
         propulsion_energy <= constants.BATTERY_ENERGY * 3600, #Battery energy limit
         propulsion_energy >= 0, #Minimum battery energy
+
+        #Fuselage
+        fuselage_length > 0.07,
+        fuselage_width > 0.07,
+        fuselage_height > 0.07,
+        fuselage_height * fuselage_width * fuselage_length > fuselage_volume_requirement,
+        fuselage_length * fuselage_width > fuselage_floor_space_requirement,
+
         #Mission Constraints
         banner_length > uc.inches2meters(10), # minimum banner length
         banner_length < 20,
         passengers / cargo >= 3, #from AIAA rules
         passengers > 3, #from AIAA rules
         cargo > 1, #from AIAA rules
-        fuselage_length > 0.07,
-        fuselage_width > 0.07,
-        fuselage_height > 0.07,
+
+
     ])
 

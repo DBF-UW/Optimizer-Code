@@ -9,7 +9,7 @@ class LapSimulator:
     def __init__(self, opti:asb.Opti, aircraft, payload:bool, banner:bool):
         self.straight_speed = opti.variable(init_guess=40, lower_bound=0) #m/s
         self.turn_speed = opti.variable(init_guess=40, lower_bound = 0) #m/s
-        self.turn_load_factor = opti.variable(init_guess=4, lower_bound=1.5, upper_bound=8) #g's
+        self.turn_load_factor = opti.variable(init_guess=4, lower_bound=1.5) #g's
         leg_length = uc.feet2meters(constants.AIAA_LENGTH) #meters
         
         straight_drag = aircraft.getDrag(self.straight_speed, 1, payload, banner)
@@ -37,6 +37,7 @@ class LapSimulator:
             self.turn_speed >= 20,
             self.straight_speed >= 20,
             self.turn_radius <= 30,
+            self.turn_load_factor < 12,
             self.straight_speed <= self.turn_speed + 10,
             self.lap_energy*self.laps_flown <= aircraft.propulsion_energy, #total energy used must be less than battery energy
             self.lap_time*self.laps_flown <= 300, #5 minute flight time

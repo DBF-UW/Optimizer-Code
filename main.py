@@ -39,7 +39,7 @@ print("M3 max score is:", M3_max_score)
 #normalized score equation
 score = GM_min_score/GM_score + (1+ M2_score/M2_max_score) + (2+M3_score/M3_max_score) + 1
 
-test_vals = np.arange(3, 70)
+test_vals = np.arange(3, 20)
 sols = []
 
 for i in test_vals:
@@ -135,6 +135,7 @@ makeOptimizerPlot(sols, test_vals, score)
 makeOptimizerPlot(sols, test_vals, M2lapper.lap_time)
 makeOptimizerPlot(sols, test_vals, M2lapper.straight_speed)
 makeOptimizerPlot(sols, test_vals, mantaRay.fuselage_length)
+makeOptimizerPlot(sols, test_vals, mantaRay.fuselageCD0)
 
 bestAirplane(opti)
 

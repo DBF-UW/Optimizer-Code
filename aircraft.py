@@ -24,22 +24,23 @@ class Aircraft:
         self.passenger_area = self.passengers*constants.DUCK_LENGTH*constants.DUCK_WIDTH #m^2
         passenger_volume = self.passenger_area*constants.DUCK_HEIGHT
         puck_volume = (3.14*(constants.PUCK_DIAMETER/2)**2)*constants.PUCK_THICKNESS/constants.PUCK_PACKING_COEFFICEINT
-        total_volume = ((puck_volume + passenger_volume)/0.7 + 0.05*0.05*0.15*2)/0.8
+        self.total_volume = ((puck_volume + passenger_volume)/0.7 + 0.05*0.05*0.15*2)/0.8
 
         self.fuselage_length = opti.variable(init_guess=1.5)
-        self.fuselage_width = self.passenger_area/self.fuselage_length
-        self.fuselage_height = total_volume/(self.fuselage_length*self.fuselage_width)
+        self.fuselage_width = opti.variable(init_guess = 0.01)
+        self.fuselage_height = opti.variable(init_guess = 0.1)
 
         self.frontal_area = self.fuselage_height * self.fuselage_width
         self.effective_diameter = np.sqrt(self.frontal_area/3.14)*2
         self.fineness_ratio = self.fuselage_length/self.effective_diameter
-        
        
         self.fuselage_wetted_area = (
                             2*(self.fuselage_height * self.fuselage_width) + #front/back
                             2*(self.fuselage_height * self.fuselage_length) + #sides
                             2*(self.fuselage_width * self.fuselage_length)) #tops
-                            
+
+        self.fuselageCD0 = self.getFuselageCD0(45, self.wing_area)    
+
         self.CD_banner = 0.03
         self.CD0_wing = 0.02
         
@@ -97,16 +98,17 @@ class Aircraft:
         CL = self.getCL(speed, load_factor, payload)
         e = 0.7 # Oswald efficiency factor
         k = 1 / (np.pi * e * AR) #induced drag term
-        CD_Wing = self.CD0 + k * CL**2
+        CD_Wing = self.CD0_wing + k * CL**2
 
         #Get fuselage drag coefficient (reference area is the wing planform again)
         CD_Fuselage = self.getFuselageCD0(speed, S) 
 
         #Calculate Drag Forces
         aircraft_drag = Q * S * (CD_Fuselage + CD_Wing) 
-        banner_drag = Q * (self.CDBanner * self.banner_length**2)/5
+        banner_drag = Q * (self.CD_banner * self.banner_length**2)/5
         if banner:
             return aircraft_drag + banner_drag
         else:
-            return aircraft_drag                           
+            return aircraft_drag  
+                        
     
