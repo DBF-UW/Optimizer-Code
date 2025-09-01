@@ -18,6 +18,8 @@ M2_score = mission_sim.M2(mantaRay, M2lapper)
 M3_score = mission_sim.M3(mantaRay, M3lapper)
 GM_score = mission_sim.GM(mantaRay)
 
+MAX_PASSENGERS = 10
+opti.subject_to([mantaRay.passengers < MAX_PASSENGERS])
 #find and save score for best GM airplane
 opti.minimize(GM_score)  
 solution1 = opti.solve(verbose=False)
@@ -39,13 +41,13 @@ print("M3 max score is:", M3_max_score)
 #normalized score equation
 score = GM_min_score/GM_score + (1+ M2_score/M2_max_score) + (2+M3_score/M3_max_score) + 1
 
-test_vals = np.arange(3, 65)
+test_vals = np.arange(3, MAX_PASSENGERS+1)
 sols = []
 
 for i in test_vals:
     print("Trying: ", i)
     
-    opti.maximize(score - (mantaRay.passengers-i)**2)
+    opti.maximize(score - 400*(mantaRay.passengers-i)**2)
 
     try:
         sol = opti.solve(verbose=False)
@@ -55,7 +57,6 @@ for i in test_vals:
     
     sols.append(sol)
 
-print(sols[1].value(score))
 
 def makeOptimizerPlot(sols, test_vals, y_variable):
     x_vals = []
@@ -70,8 +71,8 @@ def makeOptimizerPlot(sols, test_vals, y_variable):
     plt.show()
 
 def bestAirplane(opti):
-    opti.subject_to([mantaRay.passengers > 15])
     opti.maximize(score)
+    #opti.subject_to([mantaRay.passengers > 30])
     solution = opti.solve(verbose=False)
 
     label_width = 25  # Adjust as needed
@@ -130,11 +131,17 @@ def bestAirplane(opti):
     print("")
     print("------------------------------------------------------------")
 
-makeOptimizerPlot(sols, test_vals, score)
-makeOptimizerPlot(sols, test_vals, M2lapper.lap_time)
-makeOptimizerPlot(sols, test_vals, M2lapper.straight_speed)
-makeOptimizerPlot(sols, test_vals, mantaRay.fuselage_length)
-makeOptimizerPlot(sols, test_vals, mantaRay.fuselageCD0)
+
+#makeOptimizerPlot(sols, test_vals, mantaRay.fuselage_length)
+#makeOptimizerPlot(sols, test_vals, mantaRay.fuselageCD0)
 
 bestAirplane(opti)
 
+makeOptimizerPlot(sols, test_vals, score)
+
+'''
+makeOptimizerPlot(sols, test_vals, M2lapper.lap_time)
+makeOptimizerPlot(sols, test_vals, M2lapper.straight_speed)
+makeOptimizerPlot(sols, test_vals, M2_score)
+makeOptimizerPlot(sols, test_vals, M3_score)
+'''

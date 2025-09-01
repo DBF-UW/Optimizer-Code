@@ -33,7 +33,7 @@ class LapSimulator:
         opti.subject_to([
             self.straight_CL <= aircraft.CL_max,
             self.turn_CL <= aircraft.CL_max,
-            #self.laps_flown >= 3,
+            self.laps_flown >= 3,
             self.turn_speed >= 20,
             self.straight_speed >= 20,
             self.turn_radius <= 30,
