@@ -18,7 +18,7 @@ class Aircraft:
         self.AR = self.span/self.chord
         self.wing_area = self.span * self.chord
         self.airfoil = asb.Airfoil(airfoil)
-        self.CL_max = 1
+        self.CL_max = 1.6
 
         #Fuselage Parameters
         self.passenger_area = self.passengers*constants.DUCK_LENGTH*constants.DUCK_WIDTH #m^2
@@ -49,11 +49,13 @@ class Aircraft:
         self.propulsion_energy = opti.variable(init_guess=constants.BATTERY_ENERGY * 3600) #Joules
  
         #Mass Calculations
-        self.empty_mass = 1.5 #kg
+        self.fuselage_mass = (2 * constants.CARBON_FIBER_DENSITY + constants.NOMEX_DENSITY) * self.fuselage_wetted_area
         self.payload_mass = (self.cargo*constants.CARGO_MASS + self.passengers*constants.PASSENGER_MASS) #kg
         self.structure_mass = self.payload_mass*0.3
         self.battery_mass = self.propulsion_energy / constants.BATTERY_SPECIFIC_ENERGY #kg
-        self.flight_mass = self.empty_mass + self.battery_mass + self.structure_mass
+        self.motor_mass = 0.4 #kg
+        self.wiring_mass = 0.25 #kg
+        self.flight_mass = 1.5 + self.battery_mass + self.structure_mass
 
     def getTotalMass (self, payload:bool):
         if payload:

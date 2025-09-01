@@ -39,7 +39,7 @@ print("M3 max score is:", M3_max_score)
 #normalized score equation
 score = GM_min_score/GM_score + (1+ M2_score/M2_max_score) + (2+M3_score/M3_max_score) + 1
 
-test_vals = np.arange(3, 20)
+test_vals = np.arange(3, 65)
 sols = []
 
 for i in test_vals:
@@ -63,7 +63,6 @@ def makeOptimizerPlot(sols, test_vals, y_variable):
     for i in np.arange(len(test_vals)):
         x_vals.append(sols[i].value(mantaRay.passengers))
         y_vals.append(sols[i].value(y_variable))
-        print(sols[i].value(y_variable))
     plt.plot(x_vals, y_vals, marker="o")
     plt.xlabel("Passengers")
     plt.ylabel(y_variable)
@@ -71,7 +70,7 @@ def makeOptimizerPlot(sols, test_vals, y_variable):
     plt.show()
 
 def bestAirplane(opti):
-
+    opti.subject_to([mantaRay.passengers > 15])
     opti.maximize(score)
     solution = opti.solve(verbose=False)
 

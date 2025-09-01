@@ -71,6 +71,7 @@ def constraints(opti:asb.Opti, aircraft:"Aircraft") -> None:
         banner_length < 20,
         passengers / cargo >= 3, #from AIAA rules
         passengers > 3, #from AIAA rules
+        passengers < 100, #assume no team does the stupid thing and goes all in for M2
         cargo > 1, #from AIAA rules
 
 

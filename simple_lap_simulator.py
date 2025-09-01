@@ -37,8 +37,8 @@ class LapSimulator:
             self.turn_speed >= 20,
             self.straight_speed >= 20,
             self.turn_radius <= 30,
-            self.turn_load_factor < 12,
-            self.straight_speed <= self.turn_speed + 10,
+            self.turn_load_factor < 30,
+            self.straight_speed <= self.turn_speed + 2,
             self.lap_energy*self.laps_flown <= aircraft.propulsion_energy, #total energy used must be less than battery energy
             self.lap_time*self.laps_flown <= 300, #5 minute flight time
         ])
