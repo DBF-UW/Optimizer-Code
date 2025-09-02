@@ -60,6 +60,7 @@ def constraints(opti:asb.Opti, aircraft:"Aircraft") -> None:
         propulsion_energy >= 0, #Minimum battery energy
 
         #Fuselage
+        fuselage_length < 2,
         fuselage_length > 0.07,
         fuselage_width > 0.085,
         fuselage_height > 0.085,
@@ -71,7 +72,7 @@ def constraints(opti:asb.Opti, aircraft:"Aircraft") -> None:
         banner_length < 20,
         passengers / cargo >= 3, #from AIAA rules
         passengers > 3, #from AIAA rules
-        passengers < 200, #assume no team does the stupid thing and goes all in for M2
+        #passengers < 200, #assume no team does the stupid thing and goes all in for M2
         cargo > 1, #from AIAA rules
 
 

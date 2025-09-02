@@ -17,8 +17,7 @@ constraints.constraints(opti, mantaRay)
 M2_score = mission_sim.M2(mantaRay, M2lapper) 
 M3_score = mission_sim.M3(mantaRay, M3lapper)
 GM_score = mission_sim.GM(mantaRay)
-
-MAX_PASSENGERS = 10
+MAX_PASSENGERS = 100
 opti.subject_to([mantaRay.passengers < MAX_PASSENGERS])
 #find and save score for best GM airplane
 opti.minimize(GM_score)  
@@ -72,7 +71,7 @@ def makeOptimizerPlot(sols, test_vals, y_variable):
 
 def bestAirplane(opti):
     opti.maximize(score)
-    #opti.subject_to([mantaRay.passengers > 30])
+    opti.subject_to([mantaRay.passengers < 30])
     solution = opti.solve(verbose=False)
 
     label_width = 25  # Adjust as needed
@@ -128,6 +127,7 @@ def bestAirplane(opti):
     print(f"{'Turn Radius (m):':<{label_width}} {solution.value(M3lapper.turn_radius):.2f}")
     print(f"{'Turn CL:':<{label_width}} {solution.value(M3lapper.turn_CL):.2f}")
     print(f"{'Banner Length (m):':<{label_width}} {solution.value(mantaRay.banner_length):.2f}")
+    print(f"{'Banner Mass (kg):':<{label_width}} {solution.value(mantaRay.banner_mass):.2f}")
     print("")
     print("------------------------------------------------------------")
 

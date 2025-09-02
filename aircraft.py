@@ -54,6 +54,7 @@ class Aircraft:
         self.payload_mass = (self.cargo*constants.CARGO_MASS + self.passengers*constants.PASSENGER_MASS) #kg
         self.structure_mass = self.payload_mass*0.3
         self.battery_mass = self.propulsion_energy / constants.BATTERY_SPECIFIC_ENERGY #kg
+        self.banner_mass = constants.BANNER_SURFACE_DENSITY * (self.banner_length**2)/5 
         self.motor_mass = 0.4 #kg
         self.wiring_mass = 0.25 #kg
         self.flight_mass = (self.battery_mass + 
@@ -63,9 +64,11 @@ class Aircraft:
                             self.motor_mass + 
                             self.wiring_mass)
 
-    def getTotalMass (self, payload:bool):
+    def getTotalMass (self, payload:bool, banner:bool):
         if payload:
             return self.flight_mass + self.payload_mass
+        if banner:
+            return self.flight_mass + self.banner_mass
         else:
             return self.flight_mass
 
@@ -77,8 +80,8 @@ class Aircraft:
     def getReynolds (self, speed, length): 
         return (constants.RHO * speed * length / constants.MEW)
     
-    def getCL (self, speed, load_factor, payload:bool):
-        total_mass = self.getTotalMass(payload)
+    def getCL (self, speed, load_factor, payload:bool, banner:bool):
+        total_mass = self.getTotalMass(payload, banner)
         weight = total_mass * constants.GRAVITATIONAL_ACCELERATION
         Q = self.getQ(speed)
         return weight * load_factor / (Q * self.wing_area)
@@ -91,7 +94,7 @@ class Aircraft:
         return skin_friction * (1 + (60/((L/D)**3)) + 0.0025 * (L/D)) * self.fuselage_wetted_area / reference_area
 
     def getLift (self, speed, load_factor, payload:bool, banner:bool):
-         CL = self.getCL(speed, load_factor, payload)
+         CL = self.getCL(speed, load_factor, payload, banner)
          q = self.getQ(speed)
          return q*CL*self.wing_area
     
@@ -102,7 +105,7 @@ class Aircraft:
         Q = self.getQ(speed) #dynamic pressure 
        
         #Calculate Wing Total Drag Coefficient (Reference area is the wing planform, not wing wetted). Uses lifting line theory
-        CL = self.getCL(speed, load_factor, payload)
+        CL = self.getCL(speed, load_factor, payload, banner)
         e = 0.7 # Oswald efficiency factor
         k = 1 / (np.pi * e * AR) #induced drag term
         CD_Wing = self.CD0_wing + (k * CL**2)

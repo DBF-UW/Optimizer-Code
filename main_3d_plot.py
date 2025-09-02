@@ -21,7 +21,7 @@ M3_score = mission_sim.M3(mantaRay, M3lapper)
 GM_score = mission_sim.GM(mantaRay)
 
 ultimate_sols = []
-run_until = 100
+run_until = 14
 MAX_PASSENGERS = opti.parameter()
 opti.subject_to([mantaRay.passengers < MAX_PASSENGERS])
 
@@ -53,7 +53,7 @@ for j in np.arange(3, run_until+1):
     sols = []
 
     for i in test_vals:
-        print("Trying: ", i)
+        #print("Trying: ", i)
         
         opti.maximize(score - 400*(mantaRay.passengers-i)**2)
 
