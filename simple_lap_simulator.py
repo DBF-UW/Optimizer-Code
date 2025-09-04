@@ -12,14 +12,18 @@ class LapSimulator:
         self.turn_load_factor = opti.variable(init_guess=4, lower_bound=1.5) #g's
         leg_length = uc.feet2meters(constants.AIAA_LENGTH) #meters
         
+        #Straights
         straight_drag = aircraft.getDrag(self.straight_speed, 1, payload, banner)
-        self.straight_CL = aircraft.getCL(self.straight_speed, 1, payload)
+        self.straight_CL = aircraft.getCL(self.straight_speed, 1, payload, banner)
+        self.straight_L_D = aircraft.getLift(self.straight_speed, 1, payload, banner)/straight_drag
+        self.straight_power = straight_drag*self.straight_speed
 
         #Turns
         turn_acceleration = np.sqrt(self.turn_load_factor**2 - 1) * constants.GRAVITATIONAL_ACCELERATION
         self.turn_radius = self.turn_speed**2 / turn_acceleration
         turn_drag = aircraft.getDrag(self.turn_speed, self.turn_load_factor, payload, banner)
-        self.turn_CL = aircraft.getCL(self.turn_speed, self.turn_load_factor, payload)
+        self.turn_CL = aircraft.getCL(self.turn_speed, self.turn_load_factor, payload, banner)
+        self.turn_power = turn_drag * self.turn_speed
 
         self.turn_L_D = aircraft.getLift(self.turn_speed, self.turn_load_factor, payload, banner)/turn_drag
 
@@ -28,6 +32,10 @@ class LapSimulator:
         self.laps_flown = aircraft.propulsion_energy / self.lap_energy
         self.energy_used = self.lap_energy * self.laps_flown #Joules
         self.total_time = self.laps_flown * self.lap_time #seconds
+        
+
+
+  
 
         #constraints
         opti.subject_to([

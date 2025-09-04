@@ -17,6 +17,7 @@ constraints.constraints(opti, mantaRay)
 M2_score = mission_sim.M2(mantaRay, M2lapper) 
 M3_score = mission_sim.M3(mantaRay, M3lapper)
 GM_score = mission_sim.GM(mantaRay)
+
 MAX_PASSENGERS = 100
 opti.subject_to([mantaRay.passengers < MAX_PASSENGERS])
 #find and save score for best GM airplane
@@ -71,7 +72,8 @@ def makeOptimizerPlot(sols, test_vals, y_variable):
 
 def bestAirplane(opti):
     opti.maximize(score)
-    opti.subject_to([mantaRay.passengers < 30])
+    #opti.subject_to([mantaRay.passengers  < 44])
+    opti.subject_to([mantaRay.passengers > 40])
     solution = opti.solve(verbose=False)
 
     label_width = 25  # Adjust as needed
@@ -95,17 +97,21 @@ def bestAirplane(opti):
     print(f"{'Flight Mass (kg):':<{label_width}} {solution.value(mantaRay.flight_mass):.2f}")
     print(f"{'Payload Mass (kg):':<{label_width}} {solution.value(mantaRay.payload_mass):.2f}")
     print(f"{'Battery Energy (Wh):':<{label_width}} {solution.value(mantaRay.propulsion_energy/3600):.2f}")
+    print(f"{'Vertical Stab Area (m^2):':<{label_width}} {solution.value(mantaRay.v_stab_area):.2f}")
+    print(f"{'Horizontal Stab Area (m^2):':<{label_width}} {solution.value(mantaRay.h_stab_area):.2f}")
 
     print("")
     print("------------------- Mission 2 Parameters -------------------")
     print(f"{'Raw Score:':<{label_width}} {solution.value(M2_score):.2f}")
-    print(f"{'Total Mass (kg):':<{label_width}} {solution.value(mantaRay.getTotalMass(payload=True)):.2f}")
+    print(f"{'Total Mass (kg):':<{label_width}} {solution.value(mantaRay.getTotalMass(payload=True, banner=False)):.2f}")
     print(f"{'Passengers:':<{label_width}} {solution.value(mantaRay.passengers):.2f}")
     print(f"{'Passenger Area (m^2):':<{label_width}} {solution.value(mantaRay.passenger_area):.2f}")
     print(f"{'Cargo:':<{label_width}} {solution.value(mantaRay.cargo):.2f}")
     print(f"{'Laps Flown:':<{label_width}} {solution.value(M2lapper.laps_flown):.2f}")
     print(f"{'Total Time (s):':<{label_width}} {solution.value(M2lapper.total_time):.2f}")
     print(f"{'Total Energy Used (Wh):':<{label_width}} {solution.value(M2lapper.energy_used/3600):.2f}")
+    print(f"{'Turn Power (W):':<{label_width}} {solution.value(M2lapper.turn_power):.2f}")
+    print(f"{'Straight Power (W):':<{label_width}} {solution.value(M2lapper.straight_power):.2f}")
     print(f"{'Lap Time (s):':<{label_width}} {solution.value(M2lapper.lap_time):.2f}")
     print(f"{'Straight Speed (m/s):':<{label_width}} {solution.value(M2lapper.straight_speed):.2f}")
     print(f"{'Turn Speed (m/s):':<{label_width}} {solution.value(M2lapper.turn_speed):.2f}")
@@ -113,6 +119,8 @@ def bestAirplane(opti):
     print(f"{'Turn Radius (m):':<{label_width}} {solution.value(M2lapper.turn_radius):.2f}")
     print(f"{'Turn CL:':<{label_width}} {solution.value(M2lapper.turn_CL):.2f}")
     print(f"{'Turn L/D:':<{label_width}} {solution.value(M2lapper.turn_L_D):.2f}")
+    print(f"{'Straight CL:':<{label_width}} {solution.value(M2lapper.straight_CL):.2f}")
+    print(f"{'Straight L/D:':<{label_width}} {solution.value(M2lapper.straight_L_D):.2f}")
 
     print("")
     print("------------------- Mission 3 Parameters -------------------")
@@ -138,6 +146,8 @@ def bestAirplane(opti):
 bestAirplane(opti)
 
 makeOptimizerPlot(sols, test_vals, score)
+#makeOptimizerPlot(sols, test_vals, M2_score)
+#makeOptimizerPlot(sols, test_vals, M3_score)
 
 '''
 makeOptimizerPlot(sols, test_vals, M2lapper.lap_time)
