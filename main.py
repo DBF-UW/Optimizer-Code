@@ -92,6 +92,7 @@ def bestAirplane(opti):
     print(f"{'Fuselage Width (m):':<{label_width}} {solution.value(mantaRay.fuselage_width):.2f}")
     print(f"{'Fuselage Height (m):':<{label_width}} {solution.value(mantaRay.fuselage_height):.2f}")
     print(f"{'Fuselage Finess Ratio:':<{label_width}} {solution.value(mantaRay.fineness_ratio):.2f}")
+    print(f"{'Fuselage Mass (kg):':<{label_width}} {solution.value(mantaRay.fuselage_mass):.2f}")
     print(f"{'Aspect Ratio:':<{label_width}} {solution.value(mantaRay.AR):.2f}")
     print(f"{'Wing Area (m^2):':<{label_width}} {solution.value(mantaRay.wing_area):.2f}")
     print(f"{'Flight Mass (kg):':<{label_width}} {solution.value(mantaRay.flight_mass):.2f}")

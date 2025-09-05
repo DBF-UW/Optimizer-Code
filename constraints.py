@@ -36,11 +36,12 @@ def constraints(opti:asb.Opti, aircraft:"Aircraft") -> None:
     airfoil = aircraft.airfoil
     chord = aircraft.chord
     AR = aircraft.AR
-    fuselage_length = aircraft.fuselage_length
+    fuselage_box_length = aircraft.fuselage_box_length
     fuselage_width = aircraft.fuselage_width
     fuselage_height = aircraft.fuselage_height
     fuselage_volume_requirement = aircraft.total_volume
-    fuselage_floor_space_requirement = aircraft.passenger_area
+    fuselage_floor_space_requirement = aircraft.total_area
+    fuselage_length_requirement = aircraft.total_length
 
 
 
@@ -60,12 +61,13 @@ def constraints(opti:asb.Opti, aircraft:"Aircraft") -> None:
         propulsion_energy >= 0, #Minimum battery energy
 
         #Fuselage
-        fuselage_length < 2,
-        fuselage_length > 0.07,
+        fuselage_box_length < 2,
+        fuselage_box_length > 0.07,
         fuselage_width > 0.085,
-        fuselage_height > 0.085,
-        fuselage_height * fuselage_width * fuselage_length > fuselage_volume_requirement,
-        fuselage_length * fuselage_width > fuselage_floor_space_requirement,
+        fuselage_height > 0.22,
+        fuselage_height * fuselage_width * fuselage_box_length > fuselage_volume_requirement,
+        fuselage_box_length * fuselage_width > fuselage_floor_space_requirement,
+        #fuselage_box_length > fuselage_length_requirement,
 
         #Mission Constraints
         banner_length > uc.inches2meters(10), # minimum banner length

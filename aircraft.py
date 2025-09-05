@@ -21,14 +21,28 @@ class Aircraft:
         self.CL_max = 1.4
 
         #Fuselage Parameters
+        self.fuselage_length = opti.variable(init_guess=1.5)
+        self.fuselage_width = opti.variable(init_guess = 0.1)
+        self.fuselage_height = opti.variable(init_guess = 0.1)
+
+        self.fuselage_box_length = self.fuselage_length - 2.5 * self.fuselage_width #this creates a shorter usable box area for payload calculations to account for the unusable nose and tail area
+
+        #area constraints
         self.passenger_area = self.passengers*constants.DUCK_LENGTH*constants.DUCK_WIDTH #m^2
+        self.battery_area = 0.011 #m^2
+        self.total_area = (self.battery_area + self.passenger_area)*1.2
+
+        #length constraints
+        passenger_length = self.passenger_area/self.fuselage_width
+        battery_length = self.battery_area/self.fuselage_width
+        self.total_length = battery_length + passenger_length
+
+        #volume constraints
         passenger_volume = self.passenger_area*constants.DUCK_HEIGHT
         puck_volume = (3.14*(constants.PUCK_DIAMETER/2)**2)*constants.PUCK_THICKNESS/constants.PUCK_PACKING_COEFFICEINT
         self.total_volume = ((puck_volume + passenger_volume)/0.7 + 0.05*0.05*0.15*3.5)/0.8
 
-        self.fuselage_length = opti.variable(init_guess=1.5)
-        self.fuselage_width = opti.variable(init_guess = 0.1)
-        self.fuselage_height = opti.variable(init_guess = 0.1)
+
 
         self.frontal_area = self.fuselage_height * self.fuselage_width
         self.effective_diameter = np.sqrt(self.frontal_area/3.14)*2
@@ -40,7 +54,7 @@ class Aircraft:
                             2*(self.fuselage_width * self.fuselage_length)) #tops
 
         #Tail Parameters
-        elevator_volume_coefficient = 0.6
+        elevator_volume_coefficient = 0.4
         rudder_volume_coefficient = 0.04
         self.tail_arm = 0.8 #m
 
@@ -74,7 +88,7 @@ class Aircraft:
                             self.motor_mass + 
                             self.wiring_mass)
         
-        self.wetted_area = self.fuselage_wetted_area + self.wing_area*2
+        self.wetted_area = self.fuselage_wetted_area + self.wing_area*2 + (self.h_stab_area + self.v_stab_area)*2
 
     def getTotalMass (self, payload:bool, banner:bool):
         if payload:
