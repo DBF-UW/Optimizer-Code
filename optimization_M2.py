@@ -38,6 +38,7 @@ class Aircraft():
         self.V_straight_M3 = opti.variable(init_guess=30, lower_bound=0)
         self.V_turn_M3 = opti.variable(init_guess=25, lower_bound=0)
 
+
         self.banner_length = opti.variable(init_guess=1, lower_bound=0.0)
         self.banner_width = opti.variable(init_guess=1, lower_bound=0.0)
 
@@ -53,15 +54,33 @@ class Aircraft():
         self.S = self.span * self.chord
         self.AR = self.span**2 / self.S
 
+        # --- Tail sizing from volume coefficients ---
+        self.l_ht = constants.tailArmH
+        self.l_vt = constants.tailArmV
+
+        # Areas from volume coefficients: VH = (S_H * l_H) / (S * c), VV = (S_V * l_V) / (S * b)
+        # => S_H = VH * S * c / l_H ; S_V = VV * S * b / l_V
+        self.S_ht = constants.tail_VH * self.S * self.chord / self.l_ht
+        self.S_vt = constants.tail_VV * self.S * self.span  / self.l_vt
+
+        # Simple wetted-area estimate for thin tails
+        self.Swet_ht = 2.0 * self.S_ht
+        self.Swet_vt = 2.0 * self.S_vt
+
+        # Lumped parasitic drag increment from tails (added to CD0)
+        self.CD0_tail = constants.Cfe_tail * (self.Swet_ht + self.Swet_vt) / self.S
+
         #induced drag
         self.k = 1 / (np.pi * constants.oswaldEff * self.AR)
 
-        #lift
-        self.CL_straight_M2  = get_weight(20, self.span, self.chord, self.ducks, self.pucks) / (0.5 * constants.rho * self.S * self.V_straight_M2**2)
-        self.CL_turn_M2 = self.n_turn_M2 * get_weight(20, self.span, self.chord, self.ducks, self.pucks) / (0.5 * constants.rho * self.S * self.V_turn_M2**2)
 
-        self.CL_straight_M3 = (get_weight(20, self.span, self.chord, 0, 0) + aero.banner_weight(self.banner_length, self.banner_width)) / (0.5 * constants.rho * self.S * self.V_straight_M3**2)
-        self.CL_turn_M3 = self.n_turn_M3 * (get_weight(20, self.span, self.chord, 0, 0) + aero.banner_weight(self.banner_length, self.banner_width)) / (0.5 * constants.rho * self.S * self.V_turn_M3**2)
+
+        #lift
+        self.CL_straight_M2  = get_weight(self.span, self.chord, self.ducks, self.pucks, 0, 0) / (0.5 * constants.rho * self.S * self.V_straight_M2**2)
+        self.CL_turn_M2 = self.n_turn_M2 * get_weight(self.span, self.chord, self.ducks, self.pucks, 0, 0) / (0.5 * constants.rho * self.S * self.V_turn_M2**2)
+
+        self.CL_straight_M3 = get_weight(self.span, self.chord, 0, 0, self.banner_length, self.banner_width) / (0.5 * constants.rho * self.S * self.V_straight_M3**2)
+        self.CL_turn_M3 = self.n_turn_M3 * get_weight(self.span, self.chord, 0, 0, self.banner_length, self.banner_width) / (0.5 * constants.rho * self.S * self.V_turn_M3**2)
 
         self.CD_straight_M2 = constants.CD0 + self.k * self.CL_straight_M2**2
         self.CD_turn_M2 = constants.CD0 + self.k * self.CL_turn_M2 ** 2
@@ -69,12 +88,16 @@ class Aircraft():
         self.CD_straight_M3 = constants.CD0 + self.k * self.CL_straight_M3**2
         self.CD_turn_M3 = constants.CD0 + self.k * self.CL_turn_M3**2
 
+        fusDragM2_s, _ = aero.fus_drag(self.ducks, self.pucks, self.span, self.chord, self.V_straight_M2)
+        fusDragM2_t, _ = aero.fus_drag(self.ducks, self.pucks, self.span, self.chord, self.V_turn_M2)
+        fusDragM3_s, _ = aero.fus_drag(self.ducks, self.pucks, self.span, self.chord, self.V_straight_M3)
+        fusDragM3_t, _ = aero.fus_drag(self.ducks, self.pucks, self.span, self.chord, self.V_turn_M3)
         #drag force
-        self.Drag_straight_M2 = 0.5 * constants.rho * self.V_straight_M2**2 * self.S * self.CD_straight_M2
-        self.Drag_turn_M2 = 0.5 * constants.rho * self.V_turn_M2**2 * self.S * self.CD_turn_M2
+        self.Drag_straight_M2 = 0.5 * constants.rho * self.V_straight_M2**2 * self.S * self.CD_straight_M2 + fusDragM2_s
+        self.Drag_turn_M2 = 0.5 * constants.rho * self.V_turn_M2**2 * self.S * self.CD_turn_M2 + fusDragM2_t
 
-        self.Drag_straight_M3 = 0.5 * constants.rho * self.V_straight_M3**2 * self.S * self.CD_straight_M3 + aero.banner_drag(self.banner_length, self.banner_width, self.V_straight_M3)
-        self.Drag_turn_M3 = 0.5 * constants.rho * self.V_turn_M3**2 * self.S * self.CD_turn_M3 + aero.banner_drag(self.banner_length, self.banner_width, self.V_turn_M3)
+        self.Drag_straight_M3 = 0.5 * constants.rho * self.V_straight_M3**2 * self.S * self.CD_straight_M3 + aero.banner_drag(self.banner_length, self.banner_width, self.V_straight_M3) + fusDragM3_s
+        self.Drag_turn_M3 = 0.5 * constants.rho * self.V_turn_M3**2 * self.S * self.CD_turn_M3 + aero.banner_drag(self.banner_length, self.banner_width, self.V_turn_M3) + fusDragM3_t
 
         self.power_straight_M2 = self.Drag_straight_M2 * self.V_straight_M2
         self.power_turn_M2 = self.Drag_turn_M2 * self.V_turn_M2
@@ -82,16 +105,24 @@ class Aircraft():
         self.power_straight_M3 = self.Drag_straight_M3 * self.V_straight_M3
         self.power_turn_M3 = self.Drag_turn_M3 * self.V_turn_M3
 
-def get_weight(fuse_weight, span, chord, ducks, pucks):
+        #self.CD_straight_M2 += self.CD0_tail
+        self.CD_turn_M2     += self.CD0_tail
+        self.CD_straight_M3 += self.CD0_tail
+        self.CD_turn_M3     += self.CD0_tail
 
-    return fuse_weight + aero.wing_weight(span, chord) * constants.g + ducks * 0.0198447 * constants.g + pucks * 0.198447 * constants.g
+def get_weight(span, chord, ducks, pucks, length, width):
+    _, fusweight = aero.fus_drag(ducks, pucks, span, chord, 0)
+    return constants.g * (aero.wing_weight(span, chord) + aero.banner_weight(length, width) + ducks * 0.0198447 + pucks * 0.198447) + fusweight #20 will be fus weight
+
 
 #def get_wing_weight(thickness, wing_area, density=1600):
 #    volume = thickness * wing_area
 #    return volume * density * constants.g
 
+
+
 def GM_Score():
-    return 1/((3.5 * (plane.pucks + plane.ducks)) + 20)
+    return 1/((3.5 * (plane.ducks)) + 20)
 
 def M_2Score():
     Income = (plane.ducks * (constants.lp1 + (constants.lp2 * laps_flown_M2))) + (plane.pucks * (constants.lc1 + (constants.lc2 * laps_flown_M2)))
@@ -107,8 +138,8 @@ def M_3Score():
 plane = Aircraft()
 
 
-weight_M2 = get_weight(20, plane.span, plane.chord, plane.ducks, plane.pucks)
-weight_M3 = get_weight(20, plane.span, plane.chord, 0, 0) + aero.banner_weight(plane.banner_length, plane.banner_width)
+weight_M2 = get_weight(plane.span, plane.chord, plane.ducks, plane.pucks, 0, 0)
+weight_M3 = get_weight(plane.span,  plane.chord, 0, 0, plane.banner_length, plane.banner_width)
 
 lift_M2 = 0.5 * constants.rho * plane.V_straight_M2 ** 2 * plane.S * plane.CL_straight_M2
 lift_turn_M2 = 0.5 * constants.rho * plane.V_turn_M2**2 * plane.S * plane.CL_turn_M2
@@ -144,13 +175,21 @@ t_lap_M3 = 2 * t_straight_M3 + 2 * t_turn_M3
 
 #laps_flown = constants.energyUsable / E_lap
 
+#laps_flown_M2 = constants.energyUsable / E_lap_M2
+#laps_flown_M3 = constants.energyUsable / E_lap_M3
+
 laps_flown_M2 = 300 / t_lap_M2
 laps_flown_M3 = 300 / t_lap_M3
 
+plane.V_straight_M2 >= 20,
+plane.V_straight_M3 >= 20,
+plane.V_turn_M2 >= 20,
+plane.V_turn_M3 >= 20
 # constraints
 constraints = [
-    plane.ducks <= 100,
-    plane.AR >= 3,
+    plane.AR >= 3.999,
+    plane.AR <= 20,
+    plane.ducks <= constants.duck_constraint,
     plane.banner_length == 5 * plane.banner_width,
     plane.CL_straight_M2 <= constants.CLmax,
     plane.CL_turn_M2 <= constants.CLmax,
@@ -161,6 +200,10 @@ constraints = [
     E_lap_M3 * laps_flown_M3 <= constants.energyUsable,
     plane.span >= constants.minSpan,
     plane.span <= constants.maxSpan,
+    plane.V_straight_M2 >= 20,
+    plane.V_straight_M3 >= 20,
+    plane.V_turn_M2 >= 20,
+    plane.V_turn_M3 >= 20
 ]
 
 for c in constraints:
@@ -187,6 +230,9 @@ m3_ma = opti.maximize(M_3Score())
 
 solM3 = opti.solve(verbose=False)
 
+print("Plane span", solM3(plane.span))
+print("Plane banner", solM3(plane.banner_length))
+
 normalizedM3 = solM3(M_3Score())
 
 # net
@@ -198,6 +244,15 @@ netScore = (GM_Score() / normalizedGM) + 1 + (1 + M_2Score() / normalizedM2) + (
 
 net_ma = opti.maximize(netScore)
 solNet = opti.solve()
+
+ducks_val = float(solNet.value(plane.ducks))
+pucks_val = float(solNet.value(plane.pucks))
+S_ref_val = float(solNet.value(plane.S))
+V_val     = float((solNet.value(plane.V_straight_M3) + solNet.value(plane.V_straight_M2)) / 2)
+
+
+
+
 
 print("Optimized M2 Ducks: ", solm2(plane.ducks))
 
@@ -213,6 +268,10 @@ print(f"Airspeed M3:            {solNet(plane.V_straight_M3):.2f} m/s")
 print(f"Aspect Ratio (AR):   {solNet(plane.AR):.2f}")
 print(f"Weight M2:              {solNet(weight_M2) / constants.g:.2f} kg")
 print(f"Weight M3:              {solNet(weight_M3) / constants.g:.2f} kg")
+print(f"H-Stab Wing Area:  {solNet(plane.S_ht)}")
+print(f"V-Stab Wing Area:  {solNet(plane.S_vt)}")
+
+
 
 print("\n=== M2 Parameters ===")
 print(f"Ducks:               {solNet(plane.ducks)}")
@@ -235,30 +294,31 @@ print(f"Turn Speed M2:          {solNet(plane.V_turn_M2):.2f} m/s")
 print(f"V_stall:             {solNet(V_stall):.2f} m/s")
 print(f"Lift (Straight) M2:     {solNet(lift_M2)/constants.g:.2f} kg")
 print(f"Lift (Turn) M2:         {solNet(lift_turn_M2)/constants.g:.2f} kg")
+print("Load factor: ", solNet(lift_turn_M2) / solNet(weight_M2))
+
 
 print("\n=== Scoring ===")
 print(f"GM Score:          {solNet(GM_Score()):.2f}")
 print(f"M2 Score:          {solNet(M_2Score()):.2f}")
-print(f"M3 Score:          {solNet(M_3Score()):.2f}")
+print(f"M3 Score:          {solNet(M_3Score() / normalizedM3):.2f}")
 
 print("\n=== Banner ===")
 print(f"Banner Length:       {solNet(plane.banner_length):.2f} m")
 print(f"Banner Width:        {solNet(plane.banner_width):.2f} m")
 
+print("CD Straight Overall M2 ", (solNet(plane.CD_straight_M2)))
+
 print("Net Score: ", solNet(netScore))
-
-
-sweep_vals = np.linspace(3, 70, 68)  # sweep passengers
-
-# Create a parameter for the passenger target
+"""
+sweep_passengers = np.linspace(3, constants.duck_constraint, constants.duck_constraint - 2)
 duck_target = opti.parameter()
 opti.maximize(netScore - (plane.ducks - duck_target)**2)
-
+# sweep_passengers = np.linspace(3, 3, 1)
 x_vals = []
 y_vals = []
 
-for i in sweep_vals:
-    print("Trying:", i)
+for i in sweep_passengers:
+    print("Passengers: ", i)
 
     opti.set_value(duck_target, i)
 
@@ -266,16 +326,13 @@ for i in sweep_vals:
         sol = opti.solve(verbose=False)
         y_vals.append(sol.value(netScore))
         x_vals.append(sol.value(plane.ducks))
-    except RuntimeError as error:
-        print(f"Solver failed for passengers: {i}")
-        y_vals.append(0)
-        x_vals.append(i)
+    except RuntimeError as e:
+        print(f"Solver failed for {i} passengers ")
 
-print(x_vals)
-plt.plot(x_vals, y_vals, marker="o", linestyle = 'none')
-plt.xlabel("Passengers")
-plt.ylabel("Net Score (0-7)")
+plt.plot(x_vals, y_vals, marker="o", linestyle= 'none')
+plt.xlabel("Passengers (ducks)")
+plt.ylabel("Score (0-7)")
 plt.title("Score vs Passengers")
 plt.grid(True)
 plt.show()
-
+"""
