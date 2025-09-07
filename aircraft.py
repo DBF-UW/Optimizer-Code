@@ -25,7 +25,7 @@ class Aircraft:
         self.fuselage_width = opti.variable(init_guess = 0.1)
         self.fuselage_height = opti.variable(init_guess = 0.1)
 
-        self.fuselage_box_length = self.fuselage_length - 2.5 * self.fuselage_width #this creates a shorter usable box area for payload calculations to account for the unusable nose and tail area
+        self.fuselage_box_length = self.fuselage_length * 0.7 #this creates a shorter usable box area for payload calculations to account for the unusable nose and tail area
 
         #area constraints
         self.passenger_area = self.passengers*constants.DUCK_LENGTH*constants.DUCK_WIDTH #m^2
@@ -89,6 +89,9 @@ class Aircraft:
                             self.wiring_mass)
         
         self.wetted_area = self.fuselage_wetted_area + self.wing_area*2 + (self.h_stab_area + self.v_stab_area)*2
+
+        #Saving Parameters
+        self.CD0 = self.getDrag(35, 1, False, False)/(constants.RHO * 0.5 * self.wing_area * 35**2)
 
     def getTotalMass (self, payload:bool, banner:bool):
         if payload:

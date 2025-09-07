@@ -10,7 +10,7 @@ max_M2_score = 2200
 max_M3_score = 2
 
 def GM (aircraft:"aircraft.Aircraft"):
-    return (1.5 * (aircraft.cargo + aircraft.passengers)) + 20
+    return (1.5 * (aircraft.cargo + aircraft.passengers)) + 8
 
 def M1 (aircraft:"aircraft.Aircraft", lapper:"simple_lap_simulator.LapSimulator") -> float:
     return 1

@@ -64,7 +64,7 @@ def constraints(opti:asb.Opti, aircraft:"Aircraft") -> None:
         fuselage_box_length < 2,
         fuselage_box_length > 0.07,
         fuselage_width > 0.085,
-        fuselage_height > 0.22,
+        fuselage_height > 0.1,
         fuselage_height * fuselage_width * fuselage_box_length > fuselage_volume_requirement,
         fuselage_box_length * fuselage_width > fuselage_floor_space_requirement,
         #fuselage_box_length > fuselage_length_requirement,

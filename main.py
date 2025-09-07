@@ -18,8 +18,9 @@ M2_score = mission_sim.M2(mantaRay, M2lapper)
 M3_score = mission_sim.M3(mantaRay, M3lapper)
 GM_score = mission_sim.GM(mantaRay)
 
-MAX_PASSENGERS = 100
+MAX_PASSENGERS = 80
 opti.subject_to([mantaRay.passengers < MAX_PASSENGERS])
+#Sopti.subject_to([mantaRay.passengers > 25])
 #find and save score for best GM airplane
 opti.minimize(GM_score)  
 solution1 = opti.solve(verbose=False)
@@ -72,8 +73,8 @@ def makeOptimizerPlot(sols, test_vals, y_variable):
 
 def bestAirplane(opti):
     opti.maximize(score)
-    #opti.subject_to([mantaRay.passengers  < 44])
-    opti.subject_to([mantaRay.passengers > 40])
+    opti.subject_to([mantaRay.passengers  < 44])
+    #opti.subject_to([mantaRay.passengers > 40])
     solution = opti.solve(verbose=False)
 
     label_width = 25  # Adjust as needed
@@ -100,6 +101,7 @@ def bestAirplane(opti):
     print(f"{'Battery Energy (Wh):':<{label_width}} {solution.value(mantaRay.propulsion_energy/3600):.2f}")
     print(f"{'Vertical Stab Area (m^2):':<{label_width}} {solution.value(mantaRay.v_stab_area):.2f}")
     print(f"{'Horizontal Stab Area (m^2):':<{label_width}} {solution.value(mantaRay.h_stab_area):.2f}")
+    print(f"{'CD0:':<{label_width}} {solution.value(mantaRay.CD0):.4f}")
 
     print("")
     print("------------------- Mission 2 Parameters -------------------")
