@@ -6,6 +6,8 @@ import aircraft
 import constraints
 
 class LapSimulator:
+    #optimizer is allowed to decide radius and speed for turns and straights. 
+    #This is used to compute lap time and energy consumption, which is fed back to optimizer and constraints for iteration.
     def __init__(self, opti:asb.Opti, aircraft, payload:bool, banner:bool):
         self.straight_speed = opti.variable(init_guess=40, lower_bound=0) #m/s
         self.turn_speed = opti.variable(init_guess=40, lower_bound = 0) #m/s

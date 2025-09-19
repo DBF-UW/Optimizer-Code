@@ -25,7 +25,8 @@ class Aircraft:
         self.fuselage_width = opti.variable(init_guess = 0.1)
         self.fuselage_height = opti.variable(init_guess = 0.1)
 
-        self.fuselage_box_length = self.fuselage_length * 0.7 #this creates a shorter usable box area for payload calculations to account for the unusable nose and tail area
+        self.fuselage_box_length = self.fuselage_length * 0.7 #this creates a shorter usable box area for payload calculations 
+                                                              #to account for the unusable nose and tail area of the fuselage
 
         #area constraints
         self.passenger_area = self.passengers*constants.DUCK_LENGTH*constants.DUCK_WIDTH #m^2
@@ -42,8 +43,7 @@ class Aircraft:
         puck_volume = (3.14*(constants.PUCK_DIAMETER/2)**2)*constants.PUCK_THICKNESS/constants.PUCK_PACKING_COEFFICEINT
         self.total_volume = ((puck_volume + passenger_volume)/0.7 + 0.05*0.05*0.15*3.5)/0.8
 
-
-
+        #fuselage sizing numbers
         self.frontal_area = self.fuselage_height * self.fuselage_width
         self.effective_diameter = np.sqrt(self.frontal_area/3.14)*2
         self.fineness_ratio = self.fuselage_length/self.effective_diameter
@@ -61,6 +61,7 @@ class Aircraft:
         self.h_stab_area = elevator_volume_coefficient * self.wing_area * self.chord / self.tail_arm
         self.v_stab_area = rudder_volume_coefficient * self.wing_area * self.span / self.tail_arm
 
+        #Drag Parameters
         self.fuselageCD0 = self.getFuselageCD0(45, self.wing_area)    
         self.CD_banner = 0.04
         self.CD0_wing = 0.02
@@ -79,7 +80,7 @@ class Aircraft:
         self.banner_mass = constants.BANNER_SURFACE_DENSITY * (self.banner_length**2)/5 
         self.motor_mass = 0.450 #kg
         self.wiring_mass = 0.4 #kg
-        self.landing_gear_mass = 0.250 #kg
+        self.landing_gear_mass = 0.100 #kg
         self.flight_mass = (self.battery_mass + 
                             self.fuselage_mass + 
                             self.wing_skin_mass +
