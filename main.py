@@ -30,7 +30,7 @@ print("GM min score is:", GM_min_score)
 #find and save score for best M2 airplane
 opti.maximize(M2_score) 
 solution2 = opti.solve(verbose=False)
-M2_max_score = 400 #solution2.value(M2_score)
+M2_max_score = 3400 #solution2.value(M2_score)
 print("M2 max score is:", M2_max_score)
 
 
@@ -43,13 +43,13 @@ print("M3 max score is:", M3_max_score)
 #normalized score equation
 score = GM_min_score/GM_score + (1+ M2_score/M2_max_score) + (2+M3_score/M3_max_score) + 1
 
-test_vals = np.arange(3, 13)
+test_vals = np.arange(3,50)
 sols = []
 
 for i in test_vals:
     print("Trying: ", i)
     
-    opti.maximize(score - 400*(M2lapper.turn_load_factor-i)**2)
+    opti.maximize(score - 400*(mantaRay.banner_length-i/5)**2)
 
     try:
         sol = opti.solve(verbose=False)
@@ -153,10 +153,10 @@ def bestAirplane(opti):
 
 bestAirplane(opti)
 
-makeOptimizerPlot(sols, test_vals, M2lapper.turn_load_factor, score, "Max G", "Score")
-makeOptimizerPlot(sols, test_vals, M2lapper.turn_load_factor, M2lapper.lap_time, "Max G", "Lap Time")
-#makeOptimizerPlot(sols, test_vals, M2_score)
-#makeOptimizerPlot(sols, test_vals, M3_score)
+#makeOptimizerPlot(sols, test_vals, M2lapper.turn_load_factor, score, "Max G", "Score")
+#makeOptimizerPlot(sols, test_vals, M2lapper.turn_load_factor, M2lapper.lap_time, "Max G", "Lap Time")
+makeOptimizerPlot(sols, test_vals, mantaRay.banner_length, score, "Banner Length (m)", "Score")
+makeOptimizerPlot(sols, test_vals, mantaRay.banner_length, M3lapper.lap_time, "Banner Length (m)", "Lap Time (s)")
 
 '''
 makeOptimizerPlot(sols, test_vals, M2lapper.lap_time)
