@@ -18,7 +18,7 @@ M2_score = mission_sim.M2(mantaRay, M2lapper)
 M3_score = mission_sim.M3(mantaRay, M3lapper)
 GM_score = mission_sim.GM(mantaRay)
 
-MAX_PASSENGERS = 80
+MAX_PASSENGERS = 3
 opti.subject_to([mantaRay.passengers < MAX_PASSENGERS])
 #Sopti.subject_to([mantaRay.passengers > 25])
 #find and save score for best GM airplane
@@ -30,8 +30,9 @@ print("GM min score is:", GM_min_score)
 #find and save score for best M2 airplane
 opti.maximize(M2_score) 
 solution2 = opti.solve(verbose=False)
-M2_max_score = solution2.value(M2_score)
+M2_max_score = 400 #solution2.value(M2_score)
 print("M2 max score is:", M2_max_score)
+
 
 #find and save score for best M3 airplane
 opti.maximize(M3_score) 
@@ -42,13 +43,13 @@ print("M3 max score is:", M3_max_score)
 #normalized score equation
 score = GM_min_score/GM_score + (1+ M2_score/M2_max_score) + (2+M3_score/M3_max_score) + 1
 
-test_vals = np.arange(3, MAX_PASSENGERS+1)
+test_vals = np.arange(3, 13)
 sols = []
 
 for i in test_vals:
     print("Trying: ", i)
     
-    opti.maximize(score - 400*(mantaRay.passengers-i)**2)
+    opti.maximize(score - 400*(M2lapper.turn_load_factor-i)**2)
 
     try:
         sol = opti.solve(verbose=False)
@@ -59,15 +60,15 @@ for i in test_vals:
     sols.append(sol)
 
 
-def makeOptimizerPlot(sols, test_vals, y_variable):
+def makeOptimizerPlot(sols, test_vals, x_variable, y_variable, x_name, y_name):
     x_vals = []
     y_vals = []
     for i in np.arange(len(test_vals)):
-        x_vals.append(sols[i].value(mantaRay.passengers))
+        x_vals.append(sols[i].value(x_variable))
         y_vals.append(sols[i].value(y_variable))
     plt.plot(x_vals, y_vals, marker="o")
-    plt.xlabel("Passengers")
-    plt.ylabel(y_variable)
+    plt.xlabel(x_name)
+    plt.ylabel(y_name)
     plt.grid(True)
     plt.show()
 
@@ -133,9 +134,13 @@ def bestAirplane(opti):
     print(f"{'Total Energy Used (Wh):':<{label_width}} {solution.value(M3lapper.energy_used/3600):.2f}")
     print(f"{'Lap Time (s):':<{label_width}} {solution.value(M3lapper.lap_time):.2f}")
     print(f"{'Straight Speed (m/s):':<{label_width}} {solution.value(M3lapper.straight_speed):.2f}")
+    print(f"{'Straight Drag (N):':<{label_width}} {solution.value(M3lapper.straight_drag):.2f}")
+    print(f"{'Turn Power (W):':<{label_width}} {solution.value(M3lapper.turn_power):.2f}")
+    print(f"{'Straight Power (W):':<{label_width}} {solution.value(M3lapper.straight_power):.2f}")
     print(f"{'Turn Speed (m/s):':<{label_width}} {solution.value(M3lapper.turn_speed):.2f}")
     print(f"{'Turn Load Factor (g):':<{label_width}} {solution.value(M3lapper.turn_load_factor):.2f}")
     print(f"{'Turn Radius (m):':<{label_width}} {solution.value(M3lapper.turn_radius):.2f}")
+    print(f"{'Straight CL:':<{label_width}} {solution.value(M3lapper.straight_CL):.2f}")
     print(f"{'Turn CL:':<{label_width}} {solution.value(M3lapper.turn_CL):.2f}")
     print(f"{'Banner Length (m):':<{label_width}} {solution.value(mantaRay.banner_length):.2f}")
     print(f"{'Banner Mass (kg):':<{label_width}} {solution.value(mantaRay.banner_mass):.2f}")
@@ -148,7 +153,8 @@ def bestAirplane(opti):
 
 bestAirplane(opti)
 
-makeOptimizerPlot(sols, test_vals, score)
+makeOptimizerPlot(sols, test_vals, M2lapper.turn_load_factor, score, "Max G", "Score")
+makeOptimizerPlot(sols, test_vals, M2lapper.turn_load_factor, M2lapper.lap_time, "Max G", "Lap Time")
 #makeOptimizerPlot(sols, test_vals, M2_score)
 #makeOptimizerPlot(sols, test_vals, M3_score)
 

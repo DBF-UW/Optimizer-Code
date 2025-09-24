@@ -15,10 +15,10 @@ class LapSimulator:
         leg_length = uc.feet2meters(constants.AIAA_LENGTH) #meters
         
         #Straights
-        straight_drag = aircraft.getDrag(self.straight_speed, 1, payload, banner)
+        self.straight_drag = aircraft.getDrag(self.straight_speed, 1, payload, banner)
         self.straight_CL = aircraft.getCL(self.straight_speed, 1, payload, banner)
-        self.straight_L_D = aircraft.getLift(self.straight_speed, 1, payload, banner)/straight_drag
-        self.straight_power = straight_drag*self.straight_speed
+        self.straight_L_D = aircraft.getLift(self.straight_speed, 1, payload, banner)/self.straight_drag
+        self.straight_power = self.straight_drag*self.straight_speed
 
         #Turns
         turn_acceleration = np.sqrt(self.turn_load_factor**2 - 1) * constants.GRAVITATIONAL_ACCELERATION
@@ -29,7 +29,7 @@ class LapSimulator:
 
         self.turn_L_D = aircraft.getLift(self.turn_speed, self.turn_load_factor, payload, banner)/turn_drag
 
-        self.lap_energy = (straight_drag * (2 * leg_length) + turn_drag * (4 * np.pi * self.turn_radius)) / constants.PROPULSION_EFFICIENCY #Joules
+        self.lap_energy = (self.straight_drag * (2 * leg_length) + turn_drag * (4 * np.pi * self.turn_radius)) / constants.PROPULSION_EFFICIENCY #Joules
         self.lap_time = (2 * leg_length / self.straight_speed) + (4*np.pi*self.turn_radius/self.turn_speed) #seconds
         self.laps_flown = aircraft.propulsion_energy / self.lap_energy
         self.energy_used = self.lap_energy * self.laps_flown #Joules

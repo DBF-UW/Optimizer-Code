@@ -72,6 +72,8 @@ def constraints(opti:asb.Opti, aircraft:"Aircraft") -> None:
         #Mission Constraints
         banner_length > uc.inches2meters(10), # minimum banner length
         banner_length < 20,
+
+        
         passengers / cargo >= 3, #from AIAA rules
         passengers > 3, #from AIAA rules
         #passengers < 200, #assume no team does the stupid thing and goes all in for M2
