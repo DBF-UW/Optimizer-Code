@@ -1,6 +1,6 @@
 import aerosandbox as asb
 import aerosandbox.numpy as np  
-import constants
+import design_constants
 import unit_conversion as uc    
 import aircraft
 import constraints
@@ -9,13 +9,13 @@ import simple_lap_simulator
 max_M2_score = 2200
 max_M3_score = 2
 
-def GM (aircraft:"aircraft.Aircraft"):
+def GM (constants, aircraft:"aircraft.Aircraft"):
     return (1.5 * (aircraft.cargo + aircraft.passengers)) + 8
 
-def M1 (aircraft:"aircraft.Aircraft", lapper:"simple_lap_simulator.LapSimulator") -> float:
+def M1 (constants, aircraft:"aircraft.Aircraft", lapper:"simple_lap_simulator.LapSimulator") -> float:
     return 1
 
-def M2 (aircraft:"aircraft.Aircraft", lapper:"simple_lap_simulator.LapSimulator") -> float:
+def M2 (constants, aircraft:"aircraft.Aircraft", lapper:"simple_lap_simulator.LapSimulator") -> float:
     passengers = aircraft.passengers
     cargo = aircraft.cargo
     laps = lapper.laps_flown
@@ -37,7 +37,7 @@ def M2 (aircraft:"aircraft.Aircraft", lapper:"simple_lap_simulator.LapSimulator"
     net_income = income - cost
     return net_income
 
-def M3 (aircraft:"aircraft.Aircraft", lapper:"simple_lap_simulator.LapSimulator") -> float:
+def M3 (constants, aircraft:"aircraft.Aircraft", lapper:"simple_lap_simulator.LapSimulator") -> float:
     RAC = 0.05 * aircraft.span + 0.75
     laps = lapper.laps_flown
     banner_length = aircraft.banner_length

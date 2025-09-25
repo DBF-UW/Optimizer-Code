@@ -8,11 +8,11 @@ Resources
 import aerosandbox as asb
 import aerosandbox.numpy as np
 
-import constants
+import design_constants
 import unit_conversion as uc
 from aircraft import Aircraft
 
-def constraints(opti:asb.Opti, aircraft:"Aircraft") -> None:
+def constraints(opti:asb.Opti, aircraft:"Aircraft", constants:design_constants.constants_holder) -> None:
     """
     Assigns constraints to optimizer.
 
@@ -33,7 +33,6 @@ def constraints(opti:asb.Opti, aircraft:"Aircraft") -> None:
     cargo = aircraft.cargo
     span = aircraft.span
     propulsion_energy = aircraft.propulsion_energy
-    airfoil = aircraft.airfoil
     chord = aircraft.chord
     AR = aircraft.AR
     fuselage_box_length = aircraft.fuselage_box_length

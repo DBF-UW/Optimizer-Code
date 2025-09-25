@@ -1,6 +1,6 @@
 import aerosandbox as asb
 import aerosandbox.numpy as np  
-import constants
+import design_constants
 import unit_conversion as uc
 import aircraft
 import constraints
@@ -8,26 +8,26 @@ import constraints
 class LapSimulator:
     #optimizer is allowed to decide radius and speed for turns and straights. 
     #This is used to compute lap time and energy consumption, which is fed back to optimizer and constraints for iteration.
-    def __init__(self, opti:asb.Opti, aircraft, payload:bool, banner:bool):
+    def __init__(self, opti:asb.Opti, aircraft, constants:design_constants.constants_holder, payload:bool, banner:bool):
         self.straight_speed = opti.variable(init_guess=40, lower_bound=0) #m/s
         self.turn_speed = opti.variable(init_guess=40, lower_bound = 0) #m/s
         self.turn_load_factor = opti.variable(init_guess=4, lower_bound=1.5) #g's
         leg_length = uc.feet2meters(constants.AIAA_LENGTH) #meters
         
         #Straights
-        self.straight_drag = aircraft.getDrag(self.straight_speed, 1, payload, banner)
-        self.straight_CL = aircraft.getCL(self.straight_speed, 1, payload, banner)
-        self.straight_L_D = aircraft.getLift(self.straight_speed, 1, payload, banner)/self.straight_drag
+        self.straight_drag = aircraft.getDrag(constants, self.straight_speed, 1, payload, banner)
+        self.straight_CL = aircraft.getCL(constants, self.straight_speed, 1, payload, banner)
+        self.straight_L_D = aircraft.getLift(constants, self.straight_speed, 1, payload, banner)/self.straight_drag
         self.straight_power = self.straight_drag*self.straight_speed
 
         #Turns
         turn_acceleration = np.sqrt(self.turn_load_factor**2 - 1) * constants.GRAVITATIONAL_ACCELERATION
         self.turn_radius = self.turn_speed**2 / turn_acceleration
-        turn_drag = aircraft.getDrag(self.turn_speed, self.turn_load_factor, payload, banner)
-        self.turn_CL = aircraft.getCL(self.turn_speed, self.turn_load_factor, payload, banner)
+        turn_drag = aircraft.getDrag(constants, self.turn_speed, self.turn_load_factor, payload, banner)
+        self.turn_CL = aircraft.getCL(constants, self.turn_speed, self.turn_load_factor, payload, banner)
         self.turn_power = turn_drag * self.turn_speed
 
-        self.turn_L_D = aircraft.getLift(self.turn_speed, self.turn_load_factor, payload, banner)/turn_drag
+        self.turn_L_D = aircraft.getLift(constants, self.turn_speed, self.turn_load_factor, payload, banner)/turn_drag
 
         self.lap_energy = (self.straight_drag * (2 * leg_length) + turn_drag * (4 * np.pi * self.turn_radius)) / constants.PROPULSION_EFFICIENCY #Joules
         self.lap_time = (2 * leg_length / self.straight_speed) + (4*np.pi*self.turn_radius/self.turn_speed) #seconds

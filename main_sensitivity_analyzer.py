@@ -1,0 +1,169 @@
+import aerosandbox as asb
+import aerosandbox.numpy as np
+import matplotlib.pyplot as plt
+import design_constants
+import unit_conversion  as uc   
+import aircraft
+import constraints
+import simple_lap_simulator    
+import mission_sim
+
+#initialize objects
+opti = asb.Opti()
+constants = design_constants.constants_holder(opti) #this constants thing is an object so that the parameters in it can be manipulated.
+mantaRay = aircraft.Aircraft(opti, constants)
+M2lapper = simple_lap_simulator.LapSimulator(opti, mantaRay, constants, payload=True, banner=False)
+M3lapper = simple_lap_simulator.LapSimulator(opti, mantaRay, constants, payload=False, banner=True)
+constraints.constraints(opti, mantaRay, constants)
+
+#calculate mission scores
+M2_score = mission_sim.M2(constants, mantaRay, M2lapper) 
+M3_score = mission_sim.M3(constants, mantaRay, M3lapper)
+GM_score = mission_sim.GM(constants, mantaRay)
+
+MAX_PASSENGERS = 3
+opti.subject_to([mantaRay.passengers < MAX_PASSENGERS])
+#Sopti.subject_to([mantaRay.passengers > 25])
+#find and save score for best GM airplane
+opti.minimize(GM_score)  
+solution1 = opti.solve(verbose=False)
+GM_min_score = solution1.value(GM_score)
+print("GM min score is:", GM_min_score)
+
+#find and save score for best M2 airplane
+opti.maximize(M2_score) 
+solution2 = opti.solve(verbose=False)
+M2_max_score = 3400 #solution2.value(M2_score)
+print("M2 max score is:", M2_max_score)
+
+
+#find and save score for best M3 airplane
+opti.maximize(M3_score) 
+solution3 = opti.solve(verbose=False)
+M3_max_score = solution3.value(M3_score)
+print("M3 max score is:", M3_max_score)
+
+#normalized score equation
+score = GM_min_score/GM_score + (1+ M2_score/M2_max_score) + (2+M3_score/M3_max_score) + 1
+
+test_vals = np.arange(3,50)
+sols = []
+
+for i in test_vals:
+    print("Trying: ", i)
+    
+    opti.maximize(score - 400*(mantaRay.banner_length-i/5)**2)
+
+    try:
+        sol = opti.solve(verbose=False)
+    except RuntimeError as e:   # CasADi solver error
+        print(f"Solver failed for passengers: {i}")
+        score = 0
+    
+    sols.append(sol)
+
+
+def makeOptimizerPlot(sols, test_vals, x_variable, y_variable, x_name, y_name):
+    x_vals = []
+    y_vals = []
+    for i in np.arange(len(test_vals)):
+        x_vals.append(sols[i].value(x_variable))
+        y_vals.append(sols[i].value(y_variable))
+    plt.plot(x_vals, y_vals, marker="o")
+    plt.xlabel(x_name)
+    plt.ylabel(y_name)
+    plt.grid(True)
+    plt.show()
+
+def bestAirplane(opti):
+    opti.maximize(score)
+    opti.subject_to([mantaRay.passengers  < 44])
+    #opti.subject_to([mantaRay.passengers > 40])
+    solution = opti.solve(verbose=False)
+
+    label_width = 25  # Adjust as needed
+
+    print("------------------- Scoring Info -------------------")
+    print(f"{'Score:':<{label_width}} {solution.value(score):.2f}")
+    print(f"{'GM Time (s):':<{label_width}} {solution.value(GM_score):.2f}")
+    print(f"{'Min GM Time (s):':<{label_width}} {GM_min_score:.2f}")
+    print(f"{'Max M2 Score:':<{label_width}} {M2_max_score:.2f}")
+    print(f"{'Max M3 Score:':<{label_width}} {M3_max_score:.2f}")
+    print("------------------- AC Parameters -------------------")
+
+    print(f"{'Wing Span (m):':<{label_width}} {solution.value(mantaRay.span):.2f}")
+    print(f"{'Wing Chord (m):':<{label_width}} {solution.value(mantaRay.chord):.2f}")
+    print(f"{'Fuselage Length (m):':<{label_width}} {solution.value(mantaRay.fuselage_length):.2f}")
+    print(f"{'Fuselage Width (m):':<{label_width}} {solution.value(mantaRay.fuselage_width):.2f}")
+    print(f"{'Fuselage Height (m):':<{label_width}} {solution.value(mantaRay.fuselage_height):.2f}")
+    print(f"{'Fuselage Finess Ratio:':<{label_width}} {solution.value(mantaRay.fineness_ratio):.2f}")
+    print(f"{'Fuselage Mass (kg):':<{label_width}} {solution.value(mantaRay.fuselage_mass):.2f}")
+    print(f"{'Aspect Ratio:':<{label_width}} {solution.value(mantaRay.AR):.2f}")
+    print(f"{'Wing Area (m^2):':<{label_width}} {solution.value(mantaRay.wing_area):.2f}")
+    print(f"{'Flight Mass (kg):':<{label_width}} {solution.value(mantaRay.flight_mass):.2f}")
+    print(f"{'Payload Mass (kg):':<{label_width}} {solution.value(mantaRay.payload_mass):.2f}")
+    print(f"{'Battery Energy (Wh):':<{label_width}} {solution.value(mantaRay.propulsion_energy/3600):.2f}")
+    print(f"{'Vertical Stab Area (m^2):':<{label_width}} {solution.value(mantaRay.v_stab_area):.2f}")
+    print(f"{'Horizontal Stab Area (m^2):':<{label_width}} {solution.value(mantaRay.h_stab_area):.2f}")
+    print(f"{'CD0:':<{label_width}} {solution.value(mantaRay.CD0):.4f}")
+
+    print("")
+    print("------------------- Mission 2 Parameters -------------------")
+    print(f"{'Raw Score:':<{label_width}} {solution.value(M2_score):.2f}")
+    print(f"{'Total Mass (kg):':<{label_width}} {solution.value(mantaRay.getTotalMass(payload=True, banner=False)):.2f}")
+    print(f"{'Passengers:':<{label_width}} {solution.value(mantaRay.passengers):.2f}")
+    print(f"{'Passenger Area (m^2):':<{label_width}} {solution.value(mantaRay.passenger_area):.2f}")
+    print(f"{'Cargo:':<{label_width}} {solution.value(mantaRay.cargo):.2f}")
+    print(f"{'Laps Flown:':<{label_width}} {solution.value(M2lapper.laps_flown):.2f}")
+    print(f"{'Total Time (s):':<{label_width}} {solution.value(M2lapper.total_time):.2f}")
+    print(f"{'Total Energy Used (Wh):':<{label_width}} {solution.value(M2lapper.energy_used/3600):.2f}")
+    print(f"{'Turn Power (W):':<{label_width}} {solution.value(M2lapper.turn_power):.2f}")
+    print(f"{'Straight Power (W):':<{label_width}} {solution.value(M2lapper.straight_power):.2f}")
+    print(f"{'Lap Time (s):':<{label_width}} {solution.value(M2lapper.lap_time):.2f}")
+    print(f"{'Straight Speed (m/s):':<{label_width}} {solution.value(M2lapper.straight_speed):.2f}")
+    print(f"{'Turn Speed (m/s):':<{label_width}} {solution.value(M2lapper.turn_speed):.2f}")
+    print(f"{'Turn Load Factor (g):':<{label_width}} {solution.value(M2lapper.turn_load_factor):.2f}")
+    print(f"{'Turn Radius (m):':<{label_width}} {solution.value(M2lapper.turn_radius):.2f}")
+    print(f"{'Turn CL:':<{label_width}} {solution.value(M2lapper.turn_CL):.2f}")
+    print(f"{'Turn L/D:':<{label_width}} {solution.value(M2lapper.turn_L_D):.2f}")
+    print(f"{'Straight CL:':<{label_width}} {solution.value(M2lapper.straight_CL):.2f}")
+    print(f"{'Straight L/D:':<{label_width}} {solution.value(M2lapper.straight_L_D):.2f}")
+
+    print("")
+    print("------------------- Mission 3 Parameters -------------------")
+    print(f"{'Raw Score:':<{label_width}} {solution.value(M3_score):.2f}")
+    print(f"{'Laps Flown:':<{label_width}} {solution.value(M3lapper.laps_flown):.2f}")
+    print(f"{'Total Time (s):':<{label_width}} {solution.value(M3lapper.total_time):.2f}")
+    print(f"{'Total Energy Used (Wh):':<{label_width}} {solution.value(M3lapper.energy_used/3600):.2f}")
+    print(f"{'Lap Time (s):':<{label_width}} {solution.value(M3lapper.lap_time):.2f}")
+    print(f"{'Straight Speed (m/s):':<{label_width}} {solution.value(M3lapper.straight_speed):.2f}")
+    print(f"{'Straight Drag (N):':<{label_width}} {solution.value(M3lapper.straight_drag):.2f}")
+    print(f"{'Turn Power (W):':<{label_width}} {solution.value(M3lapper.turn_power):.2f}")
+    print(f"{'Straight Power (W):':<{label_width}} {solution.value(M3lapper.straight_power):.2f}")
+    print(f"{'Turn Speed (m/s):':<{label_width}} {solution.value(M3lapper.turn_speed):.2f}")
+    print(f"{'Turn Load Factor (g):':<{label_width}} {solution.value(M3lapper.turn_load_factor):.2f}")
+    print(f"{'Turn Radius (m):':<{label_width}} {solution.value(M3lapper.turn_radius):.2f}")
+    print(f"{'Straight CL:':<{label_width}} {solution.value(M3lapper.straight_CL):.2f}")
+    print(f"{'Turn CL:':<{label_width}} {solution.value(M3lapper.turn_CL):.2f}")
+    print(f"{'Banner Length (m):':<{label_width}} {solution.value(mantaRay.banner_length):.2f}")
+    print(f"{'Banner Mass (kg):':<{label_width}} {solution.value(mantaRay.banner_mass):.2f}")
+    print("")
+    print("------------------------------------------------------------")
+
+
+#makeOptimizerPlot(sols, test_vals, mantaRay.fuselage_length)
+#makeOptimizerPlot(sols, test_vals, mantaRay.fuselageCD0)
+
+bestAirplane(opti)
+
+#makeOptimizerPlot(sols, test_vals, M2lapper.turn_load_factor, score, "Max G", "Score")
+#makeOptimizerPlot(sols, test_vals, M2lapper.turn_load_factor, M2lapper.lap_time, "Max G", "Lap Time")
+makeOptimizerPlot(sols, test_vals, mantaRay.banner_length, score, "Banner Length (m)", "Score")
+makeOptimizerPlot(sols, test_vals, mantaRay.banner_length, M3lapper.lap_time, "Banner Length (m)", "Lap Time (s)")
+
+'''
+makeOptimizerPlot(sols, test_vals, M2lapper.lap_time)
+makeOptimizerPlot(sols, test_vals, M2lapper.straight_speed)
+makeOptimizerPlot(sols, test_vals, M2_score)
+makeOptimizerPlot(sols, test_vals, M3_score)
+'''

@@ -1,4 +1,4 @@
-from constants import GRAVITATIONAL_ACCELERATION
+GRAVITATIONAL_ACCELERATION = 9.808
 import aerosandbox.numpy as np
 
 
