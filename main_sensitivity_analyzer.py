@@ -21,7 +21,7 @@ M2_score = mission_sim.M2(constants, mantaRay, M2lapper)
 M3_score = mission_sim.M3(constants, mantaRay, M3lapper)
 GM_score = mission_sim.GM(constants, mantaRay)
 
-MAX_PASSENGERS = 3
+MAX_PASSENGERS = 80
 opti.subject_to([mantaRay.passengers < MAX_PASSENGERS])
 #Sopti.subject_to([mantaRay.passengers > 25])
 #find and save score for best GM airplane
@@ -33,9 +33,8 @@ print("GM min score is:", GM_min_score)
 #find and save score for best M2 airplane
 opti.maximize(M2_score) 
 solution2 = opti.solve(verbose=False)
-M2_max_score = 3400 #solution2.value(M2_score)
+M2_max_score = solution2.value(M2_score)
 print("M2 max score is:", M2_max_score)
-
 
 #find and save score for best M3 airplane
 opti.maximize(M3_score) 
@@ -44,41 +43,32 @@ M3_max_score = solution3.value(M3_score)
 print("M3 max score is:", M3_max_score)
 
 #normalized score equation
-score = GM_min_score/GM_score + (1+ M2_score/M2_max_score) + (2+M3_score/M3_max_score) + 1
+score = constants.REPORT_SCORE_FACTOR * (GM_min_score/GM_score + (1+ M2_score/M2_max_score) + (2+M3_score/M3_max_score) + 1)
 
-test_vals = np.arange(3,50)
-sols = []
+#now that max scores have been made, constrain to our known solution space (3 passengers)
+opti.subject_to([mantaRay.passengers < 3])
 
-for i in test_vals:
-    print("Trying: ", i)
-    
-    opti.maximize(score - 400*(mantaRay.banner_length-i/5)**2)
+def sensitivitySweep(sweep_variable, center_value, percent_sweep):
+    test_range = np.arange(-percent_sweep, percent_sweep + 1)
+    scores = []
 
-    try:
-        sol = opti.solve(verbose=False)
-    except RuntimeError as e:   # CasADi solver error
-        print(f"Solver failed for passengers: {i}")
-        score = 0
-    
-    sols.append(sol)
+    opti.set_value(sweep_variable, center_value)
+    opti.maximize(score)
+    base_score = opti.solve(verbose = False).value(score)
 
-
-def makeOptimizerPlot(sols, test_vals, x_variable, y_variable, x_name, y_name):
-    x_vals = []
-    y_vals = []
-    for i in np.arange(len(test_vals)):
-        x_vals.append(sols[i].value(x_variable))
-        y_vals.append(sols[i].value(y_variable))
-    plt.plot(x_vals, y_vals, marker="o")
-    plt.xlabel(x_name)
-    plt.ylabel(y_name)
-    plt.grid(True)
-    plt.show()
+    for i in test_range:
+        modifier = 1 + i/100
+        opti.set_value(sweep_variable, center_value * modifier)
+        opti.maximize(score)
+        print("Trying modifier = ", modifier)
+        scores.append(opti.solve(verbose = False).value(score))
+    scores = np.array(scores)
+    scores = ((scores-base_score)/base_score)*100
+    return scores
 
 def bestAirplane(opti):
+    
     opti.maximize(score)
-    opti.subject_to([mantaRay.passengers  < 44])
-    #opti.subject_to([mantaRay.passengers > 40])
     solution = opti.solve(verbose=False)
 
     label_width = 25  # Adjust as needed
@@ -150,20 +140,40 @@ def bestAirplane(opti):
     print("")
     print("------------------------------------------------------------")
 
+driving_parameters = [
+    constants.PROPULSION_EFFICIENCY_FACTOR,
+    constants.STRUCTURES_EXECUTION_FACTOR,
+    constants.FUSELAGE_PACKING_FACTOR,
+    constants.PARASITIC_DRAG_FACTOR,
+    constants.BANNER_CD_FACTOR,
+    constants.OSWALD_EFFICIENCY_FACTOR,
+    constants.GM_TIME_FACTOR,
+    constants.CL_MAX_FACTOR,
+]
 
-#makeOptimizerPlot(sols, test_vals, mantaRay.fuselage_length)
-#makeOptimizerPlot(sols, test_vals, mantaRay.fuselageCD0)
+labels = [
+    "Propulsion Efficiency",
+    "Aircraft Weight",
+    "Fuselage Size",
+    "Parasitic Drag",
+    "Banner Drag",
+    "Oswald Efficiency",
+    "Ground Mission Time",
+    "Cl Max",
+]
 
-bestAirplane(opti)
+percent_sweep = 25
+x_vals = np.arange(-percent_sweep, percent_sweep + 1)
 
-#makeOptimizerPlot(sols, test_vals, M2lapper.turn_load_factor, score, "Max G", "Score")
-#makeOptimizerPlot(sols, test_vals, M2lapper.turn_load_factor, M2lapper.lap_time, "Max G", "Lap Time")
-makeOptimizerPlot(sols, test_vals, mantaRay.banner_length, score, "Banner Length (m)", "Score")
-makeOptimizerPlot(sols, test_vals, mantaRay.banner_length, M3lapper.lap_time, "Banner Length (m)", "Lap Time (s)")
+for i in np.arange(0, len(driving_parameters)):
+    parameter = driving_parameters[i]
+    label = labels[i]
+    plt.plot(x_vals, sensitivitySweep(parameter, 1, percent_sweep), label = label)
 
-'''
-makeOptimizerPlot(sols, test_vals, M2lapper.lap_time)
-makeOptimizerPlot(sols, test_vals, M2lapper.straight_speed)
-makeOptimizerPlot(sols, test_vals, M2_score)
-makeOptimizerPlot(sols, test_vals, M3_score)
-'''
+
+plt.xlabel("Percent Change In Variable")
+plt.ylabel("Percent Change In Score")
+plt.grid(True)
+plt.legend(loc="upper left", bbox_to_anchor=(1.05, 1))
+plt.tight_layout()
+plt.show()

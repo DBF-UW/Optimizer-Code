@@ -11,6 +11,17 @@ import aerosandbox.numpy as np
 
 class constants_holder:
     def __init__(self, opti:asb.Opti):
+        # =========== Driving Parameters ===========
+        self.PROPULSION_EFFICIENCY_FACTOR = make_param(opti, 1)
+        self.STRUCTURES_EXECUTION_FACTOR = make_param(opti, 1)
+        self.FUSELAGE_PACKING_FACTOR = make_param(opti, 1)
+        self.PARASITIC_DRAG_FACTOR = make_param(opti, 1)
+        self.BANNER_CD_FACTOR = make_param(opti, 1)
+        self.OSWALD_EFFICIENCY_FACTOR = make_param(opti, 1)
+        self.GM_TIME_FACTOR = make_param(opti, 1)
+        self.CL_MAX_FACTOR = make_param(opti, 1)
+        self.REPORT_SCORE_FACTOR = make_param(opti, 1)
+
         # =========== PHYSICAL CONSTANTS ===========
         self.GRAVITATIONAL_ACCELERATION = 9.80665  # m/s^2
         self.EARTH_RADIUS = 6371e3  # meters
@@ -29,7 +40,7 @@ class constants_holder:
         self.LOAD_FACTOR_LIMIT = 8 # g's
 
         # =========== A&P CONSTANTS ============
-        self.PROPULSION_EFFICIENCY = 0.75 # unitless
+        self.PROPULSION_EFFICIENCY = 0.75 * self.PROPULSION_EFFICIENCY_FACTOR # unitless
         self.BATTERY_ENERGY = 100  # Wh
         self.MOTOR_MASS = 0.5  # kg
         self.LG_MASS = 0.5  # kg
@@ -57,6 +68,7 @@ class constants_holder:
         # =========== STRUCTURAL CONSTANTS ========
         self.STRUCTURAL_SAFETY_FACTOR = 1.5  # unitless
         self.WING_SURFACE_DENSITY = 2  # kg/m^2
+        
 
         self.CARBON_FIBER_DENSITY = 0.088 #kg/m^2
         self.NOMEX_DENSITY = 0.058 #kg/m^2
@@ -70,3 +82,7 @@ class constants_holder:
         self.MAX_WING_SPAN = 5 # ft
         self.MIN_WING_SPAN = 3 # ft
 
+def make_param(opti, startingvalue):
+    p = opti.parameter()
+    opti.set_value(p, startingvalue)
+    return p

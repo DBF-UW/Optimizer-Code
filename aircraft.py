@@ -17,7 +17,7 @@ class Aircraft:
         self.AR = opti.variable(init_guess=6)
         self.chord = self.span/self.AR
         self.wing_area = self.span * self.chord
-        self.CL_max = 1.4
+        self.CL_max = 1.4 * constants.CL_MAX_FACTOR
 
         #Fuselage Parameters
         self.fuselage_length = opti.variable(init_guess=1.5)
@@ -40,7 +40,7 @@ class Aircraft:
         #volume constraints
         passenger_volume = self.passenger_area*constants.DUCK_HEIGHT
         puck_volume = (3.14*(constants.PUCK_DIAMETER/2)**2)*constants.PUCK_THICKNESS/constants.PUCK_PACKING_COEFFICEINT
-        self.total_volume = ((puck_volume + passenger_volume)/0.7 + 0.05*0.05*0.15*3.5)/0.8
+        self.total_volume = constants.FUSELAGE_PACKING_FACTOR*((puck_volume + passenger_volume)/0.7 + 0.05*0.05*0.15*3.5)/0.8
 
         #fuselage sizing numbers
         self.frontal_area = self.fuselage_height * self.fuselage_width
@@ -61,10 +61,10 @@ class Aircraft:
         self.v_stab_area = rudder_volume_coefficient * self.wing_area * self.span / self.tail_arm
 
         #Drag Parameters
-        self.fuselageCD0 = self.getFuselageCD0(constants, 45, self.wing_area)    
-        self.CD_banner = 0.04
-        self.CD0_wing = 0.02
-        self.CD_tail = 0.02
+        self.fuselageCD0 = self.getFuselageCD0(constants, 45, self.wing_area) * constants.PARASITIC_DRAG_FACTOR     
+        self.CD_banner = 0.04 * constants.BANNER_CD_FACTOR
+        self.CD0_wing = 0.02 * constants.PARASITIC_DRAG_FACTOR
+        self.CD_tail = 0.02 * constants.PARASITIC_DRAG_FACTOR
         
 
         # AP Parameters
@@ -86,7 +86,7 @@ class Aircraft:
                             self.landing_gear_mass +
                             self.structure_mass + 
                             self.motor_mass + 
-                            self.wiring_mass)
+                            self.wiring_mass) * constants.STRUCTURES_EXECUTION_FACTOR
         
         self.wetted_area = self.fuselage_wetted_area + self.wing_area*2 + (self.h_stab_area + self.v_stab_area)*2
 
@@ -135,7 +135,7 @@ class Aircraft:
        
         #Calculate Wing Total Drag Coefficient (Reference area is the wing planform, not wing wetted). Uses lifting line theory
         CL = self.getCL(constants, speed, load_factor, payload, banner)
-        e = 0.7 # Oswald efficiency factor
+        e = 0.7 * constants.OSWALD_EFFICIENCY_FACTOR # Oswald efficiency factor
         k = 1 / (np.pi * e * AR) #induced drag term
         CD_Wing = self.CD0_wing + (k * CL**2)
 

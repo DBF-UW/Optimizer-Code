@@ -21,7 +21,7 @@ M2_score = mission_sim.M2(constants, mantaRay, M2lapper)
 M3_score = mission_sim.M3(constants, mantaRay, M3lapper)
 GM_score = mission_sim.GM(constants, mantaRay)
 
-MAX_PASSENGERS = 3
+MAX_PASSENGERS = 80
 opti.subject_to([mantaRay.passengers < MAX_PASSENGERS])
 #Sopti.subject_to([mantaRay.passengers > 25])
 #find and save score for best GM airplane
@@ -31,6 +31,7 @@ GM_min_score = solution1.value(GM_score)
 print("GM min score is:", GM_min_score)
 
 #find and save score for best M2 airplane
+#CURRENTLY HARDCODED M2 MAX SCORE
 opti.maximize(M2_score) 
 solution2 = opti.solve(verbose=False)
 M2_max_score = 3400 #solution2.value(M2_score)
@@ -40,19 +41,19 @@ print("M2 max score is:", M2_max_score)
 #find and save score for best M3 airplane
 opti.maximize(M3_score) 
 solution3 = opti.solve(verbose=False)
-M3_max_score = solution3.value(M3_score)
+M3_max_score = 44.35 #solution3.value(M3_score)
 print("M3 max score is:", M3_max_score)
 
 #normalized score equation
 score = GM_min_score/GM_score + (1+ M2_score/M2_max_score) + (2+M3_score/M3_max_score) + 1
 
-test_vals = np.arange(3,50)
+test_vals = np.arange(3,80)
 sols = []
 
 for i in test_vals:
     print("Trying: ", i)
     
-    opti.maximize(score - 400*(mantaRay.banner_length-i/5)**2)
+    opti.maximize(score - 400*(mantaRay.passengers-i)**2)
 
     try:
         sol = opti.solve(verbose=False)
@@ -158,8 +159,7 @@ bestAirplane(opti)
 
 #makeOptimizerPlot(sols, test_vals, M2lapper.turn_load_factor, score, "Max G", "Score")
 #makeOptimizerPlot(sols, test_vals, M2lapper.turn_load_factor, M2lapper.lap_time, "Max G", "Lap Time")
-makeOptimizerPlot(sols, test_vals, mantaRay.banner_length, score, "Banner Length (m)", "Score")
-makeOptimizerPlot(sols, test_vals, mantaRay.banner_length, M3lapper.lap_time, "Banner Length (m)", "Lap Time (s)")
+makeOptimizerPlot(sols, test_vals, mantaRay.passengers, score, "Passenger Count", "Score")
 
 '''
 makeOptimizerPlot(sols, test_vals, M2lapper.lap_time)
