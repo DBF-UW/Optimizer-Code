@@ -21,7 +21,7 @@ M2_score = mission_sim.M2(constants, mantaRay, M2lapper)
 M3_score = mission_sim.M3(constants, mantaRay, M3lapper)
 GM_score = mission_sim.GM(constants, mantaRay)
 
-MAX_PASSENGERS = 80
+MAX_PASSENGERS = 50
 opti.subject_to([mantaRay.passengers < MAX_PASSENGERS])
 #Sopti.subject_to([mantaRay.passengers > 25])
 #find and save score for best GM airplane
@@ -34,14 +34,14 @@ print("GM min score is:", GM_min_score)
 #CURRENTLY HARDCODED M2 MAX SCORE
 opti.maximize(M2_score) 
 solution2 = opti.solve(verbose=False)
-M2_max_score = 3400 #solution2.value(M2_score)
+M2_max_score = solution2.value(M2_score)
 print("M2 max score is:", M2_max_score)
 
 
 #find and save score for best M3 airplane
 opti.maximize(M3_score) 
 solution3 = opti.solve(verbose=False)
-M3_max_score = 44.35 #solution3.value(M3_score)
+M3_max_score = solution3.value(M3_score)
 print("M3 max score is:", M3_max_score)
 
 #normalized score equation
@@ -120,6 +120,7 @@ def bestAirplane(opti):
     print(f"{'Total Energy Used (Wh):':<{label_width}} {solution.value(M2lapper.energy_used/3600):.2f}")
     print(f"{'Turn Power (W):':<{label_width}} {solution.value(M2lapper.turn_power):.2f}")
     print(f"{'Straight Power (W):':<{label_width}} {solution.value(M2lapper.straight_power):.2f}")
+    print(f"{'Straight Drag (N):':<{label_width}} {solution.value(M2lapper.straight_drag):.2f}")
     print(f"{'Lap Time (s):':<{label_width}} {solution.value(M2lapper.lap_time):.2f}")
     print(f"{'Straight Speed (m/s):':<{label_width}} {solution.value(M2lapper.straight_speed):.2f}")
     print(f"{'Turn Speed (m/s):':<{label_width}} {solution.value(M2lapper.turn_speed):.2f}")

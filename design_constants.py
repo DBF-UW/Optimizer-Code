@@ -40,7 +40,7 @@ class constants_holder:
         self.LOAD_FACTOR_LIMIT = 8 # g's
 
         # =========== A&P CONSTANTS ============
-        self.PROPULSION_EFFICIENCY = 0.75 * self.PROPULSION_EFFICIENCY_FACTOR # unitless
+        self.PROPULSION_EFFICIENCY = 0.7 * self.PROPULSION_EFFICIENCY_FACTOR # unitless
         self.BATTERY_ENERGY = 100  # Wh
         self.MOTOR_MASS = 0.5  # kg
         self.LG_MASS = 0.5  # kg

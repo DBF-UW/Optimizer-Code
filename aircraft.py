@@ -62,7 +62,7 @@ class Aircraft:
 
         #Drag Parameters
         self.fuselageCD0 = self.getFuselageCD0(constants, 45, self.wing_area) * constants.PARASITIC_DRAG_FACTOR     
-        self.CD_banner = 0.04 * constants.BANNER_CD_FACTOR
+        self.CD_banner = 0.021 * 0.78 * constants.BANNER_CD_FACTOR
         self.CD0_wing = 0.02 * constants.PARASITIC_DRAG_FACTOR
         self.CD_tail = 0.02 * constants.PARASITIC_DRAG_FACTOR
         
@@ -80,7 +80,7 @@ class Aircraft:
         self.motor_mass = 0.450 #kg
         self.wiring_mass = 0.4 #kg
         self.landing_gear_mass = 0.100 #kg
-        self.flight_mass = (self.battery_mass + 
+        self.flight_mass =  (self.battery_mass + 
                             self.fuselage_mass + 
                             self.wing_skin_mass +
                             self.landing_gear_mass +
@@ -143,7 +143,7 @@ class Aircraft:
         CD_Fuselage = self.getFuselageCD0(constants, speed, S) 
 
         #Calculate Drag Forces
-        aircraft_drag = Q * (S * (CD_Fuselage + CD_Wing) + (self.CD_tail * (self.h_stab_area + self.v_stab_area)))
+        aircraft_drag =  Q * (S * (3* CD_Fuselage + CD_Wing) + (self.CD_tail * (self.h_stab_area + self.v_stab_area)))
         banner_drag = Q * (self.CD_banner * self.banner_length**2)/5 ##investigate reynolds number effects on drag, using skin friction and also consider mast effects (look at naval architecture textbook)
         if banner:
             return aircraft_drag + banner_drag
