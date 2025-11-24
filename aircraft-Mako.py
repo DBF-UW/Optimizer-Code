@@ -8,12 +8,12 @@ class Aircraft:
     def __init__(self, opti:asb.Opti, constants:design_constants.constants_holder):
 
         # Mission Parameters
-        self.passengers = opti.variable(init_guess=3)  
-        self.cargo = opti.variable(init_guess=1)
+        self.passengers = 3
+        self.cargo = 1
         self.banner_length = opti.variable(init_guess = uc.inches2meters(10))
 
         # Wing Parameters
-        self.span = opti.variable(init_guess=1.5)
+        self.span = 1.52
         self.AR = opti.variable(init_guess=6)
         self.chord = self.span/self.AR
         self.wing_area = self.span * self.chord

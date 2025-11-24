@@ -93,6 +93,38 @@ class Aircraft:
         #Saving Parameters
         self.CD0 = self.getDrag(constants, 35, 1, False, False)/(constants.RHO * 0.5 * self.wing_area * 35**2)
 
+        #Constraints:
+        opti.subject_to([
+
+            #Wing
+            self.span <= uc.feet2meters(constants.MAX_WING_SPAN),
+            self.span >= uc.feet2meters(constants.MIN_WING_SPAN),
+            self.AR > 4, #minimum AR
+            self.AR < 12, #maximum AR
+
+            #AP
+            self.propulsion_energy <= constants.BATTERY_ENERGY * 3600, #Battery energy limit
+            self.propulsion_energy >= 0, #Minimum battery energy
+
+            #Fuselage
+            self.fuselage_box_length < 2,
+            self.fuselage_box_length > 0.07,
+            self.fuselage_width > 0.085,
+            self.fuselage_height > 0.1,
+            self.fuselage_height * self.fuselage_width * self.fuselage_box_length > self.total_volume, #volume requirement
+            self.fuselage_box_length * self.fuselage_width > self.total_area, #floorspace requirement
+
+            #Mission Constraints
+            self.banner_length > uc.inches2meters(10), # minimum banner length
+            self.banner_length < 20,
+
+            
+            self.passengers / self.cargo >= 3, #from AIAA rules
+            self.passengers > 3, #from AIAA rules
+            #passengers < 200, #assume no team does the stupid thing and goes all in for M2
+            self.cargo > 1, #from AIAA rules
+        ])
+
     def getTotalMass (self, payload:bool, banner:bool):
         if payload:
             return self.flight_mass + self.payload_mass

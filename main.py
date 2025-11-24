@@ -4,7 +4,6 @@ import matplotlib.pyplot as plt
 import design_constants
 import unit_conversion  as uc   
 import aircraft
-import constraints
 import simple_lap_simulator    
 import mission_sim
 
@@ -14,7 +13,6 @@ constants = design_constants.constants_holder(opti) #this constants thing is an 
 mantaRay = aircraft.Aircraft(opti, constants)
 M2lapper = simple_lap_simulator.LapSimulator(opti, mantaRay, constants, payload=True, banner=False)
 M3lapper = simple_lap_simulator.LapSimulator(opti, mantaRay, constants, payload=False, banner=True)
-constraints.constraints(opti, mantaRay, constants)
 
 #calculate mission scores
 M2_score = mission_sim.M2(constants, mantaRay, M2lapper) 
