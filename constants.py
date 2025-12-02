@@ -1,71 +1,69 @@
-"""
-Stores all useful constants
+# Constants: This will include all constants for the optimization
+import aero_functions as aero
 
-Resources
----------
-Pink Foam Density
-    https://www.homedepot.com/p/Owens-Corning-FOAMULAR-150-2-in-x-4-ft-x-8-ft-R-10-Scored-Squared-Edge-Rigid-Foam-Board-Insulation-Sheathing-45W/100320352
-"""
+duck_constraint = 55
 
-# =========== PHYSICAL CONSTANTS ===========
-GRAVITATIONAL_ACCELERATION = 9.80665  # m/s^2
-EARTH_RADIUS = 6371e3  # meters
-R = 287.05  # J/(kg*K) gas constant for dry air
-PS = 101325  # Pa standard pressure
-RHOS = 1.225  # kg/m^3 standard density
-TS = 288.15  # K standard temperature
-SPECIFIC_HEAT_AIR_CONSTANT_PRESSURE = 1004  # J/(kg*K)
-SPECIFIC_HEAT_AIR_CONSTANT_VOLUME = 717  # J/(kg*K)
+mu = 1.81e-5 # kg / (m * s)
 
-# =========== ENVIROMENTAL CONSTANTS ========
-RHO = 0.0021 # slug/ft3
-T = 72.3238 # F
-MU_ROLL = 0.05 # unitless
+batteryCapacity = 100 # Watt hours
+propulsionEfficiency = 0.7 # set as a constant but will be dynamic later
+energyUsable = batteryCapacity * propulsionEfficiency * 3600 # joules
+rho = 1.225 # kg/m^3
+n_max = 100 # g's
+CLmax = 1.1
+g = 9.81 #m/s^2
+CD0 = 0.03 # 0.06
+inducedDragFactor = 1
+straightDist = 304.8 # m
+maxSpan = 1.524 # m 
+minSpan = 0.9144
+oswaldEff = 0.7
 
-# =========== MATERIAL CONSTANTS ===========
-PINK_FOAM_DENSITY = 23.637083912 # kg/m^3
-LOAD_FACTOR_LIMIT = 8 # g's
+fus_drag_correction_factor = 2
+fuselage_drag_factor = 1 # this could be tuned to 16 for accurate drag predictions ... 
+# 2.4 will give you 80 break even
 
-# =========== A&P CONSTANTS ============
-STATIC_THRUST = 70 # N
-DYNAMIC_THRUST = lambda v: (-0.0258631 * v * v) + (0.916509 * v) + 97.452 # N <- This is a curve fit from 23-24 data (Data provided from Josh)
+weightForBattery = batteryCapacity * 3600 / 500000 # kg    500,000 J / kg
 
-# =========== 2024-2025 DBF REQS ===========
-AIAA_LENGTH = 1000 # ft
+# define a M2 and M3 (mass)
 
-MAX_WING_SPAN = 5 # ft
-#MIN_FUEL_TANKS = 2
+lp1 = 6
+lp2 = 2
+lc1 = 10
+lc2 = 8
+Ce = 10
+Cp = 0.5
+Cc = 2
 
-#MAX_X1_WEIGHT = 0.55 # lb
-#MIN_X1_RELEASE = 200 # ft
-#MAX_X1_RELEASE = 400 # ft
+# --- Tail constants 
+tail_VH      = 0.95   # your H-stab volume coefficient
+tail_VV      = 0.10   # your V-stab volume coefficient
+tailArmH     = 1.5    # m, horiz tail moment arm l_H (set to your fuselage length to tail AC)
+tailArmV     = 1.5    # m, vert tail moment arm l_V (often ~ l_H)
+Cfe_tail     = 0.006  # flat-plate equivalent for tail surfaces (0.005-0.008 typical)
 
-# Mission 1
-MISSION_1_TIME = 600
-MISSION_1_POINTS = 1
+#volume parms
 
-# Mission 2
-MISSION_2_TIME = 600
-#MISSION_2_LAPS = 3
-MISSION_2_POINTS = 1
-LP1 = 6
-LP2 = 2
-LC1 = 10
-LC2 = 8
-CE = 10
-CP = 0.5
-CC = 2
-EF = 1
-PASSENGER_WEIGHT = 0.1946096957 # N
-CARGO_WEIGHT = 1.9460969567 # N
+duck_length = 2.5 * 0.0254
+duck_width = 2.3 * 0.0254
+duck_height = 2.5 * 0.0254
 
-# Mission 3
-MISSION_3_TIME = 600
-MISSION_3_POINTS = 2
+puck_diameter = 0.0762
+puck_thickness = 1 * 0.0254
 
+# tunable 
+PUCK_PACKING_COEFFICEINT = 1
+FUSELAGE_PACKING_FACTOR = 1
+stuctures_correction_factor = 1
+banner_turn_drag_factor = 2
+fuse_weight_correction_factor = 4.84
 
+carbon_fiber_density = 0.088 # kg / m^2
+nomex_density = 0.058 # kg / m^2
 
+zero_lift_correction_factor = 1.5
 
-# =========== VLM CONSTANTSs ===========
-SPAN_RESOLUTION = 8
-CHORCH_RESOLUTION = 6
+lap_breakdown = 20
+lap_breakdown_turn = 8
+
+initial_height = 0
