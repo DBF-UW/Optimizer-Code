@@ -1,0 +1,39 @@
+import aerosandbox as asb
+import aerosandbox.numpy as np  
+import design_constants
+import unit_conversion as uc
+import aircraft
+import constraints
+
+maxSpeed = 40 #m/s
+
+class PlaneState:
+    def __init__(self, position, velocity, opti:asb.Opti):
+
+        positionAdjust = opti.variable(init_guess=np.array([0,0,0]))
+        velocityAdjust = opti.variable(init_guess=np.array([0,0,0]))
+
+        self.position = position #+ positionAdjust
+        self.velocity = velocity #+ velocityAdjust
+
+        self.speed = np.sqrt(np.sum(velocity**2))
+
+class TurnSegment:
+    def __init__(self, initialState:PlaneState, finalState:PlaneState, opti:asb.Opti):
+
+        self.displacement = finalState.position - initialState.position 
+        self.dv = finalState.velocity - initialState.velocity
+        self.averageSpeed = (initialState.speed + finalState.speed)/2
+        self.aircraftHeading = (initialState.velocity + finalState.velocity)/2 #aircraft heading is assumed to be average of two headings
+
+class Turn:
+    def __init__(self, aircraft:aircraft.Aircraft, constants:design_constants.constants_holder, opti:asb.Opti, initialLoadFactor, initialSpeed, initialAlt, segmentCount:int, rightTurn:bool):
+        #calculating turn radius
+        turn_acceleration = np.sqrt(self.turn_load_factor**2 - 1) * constants.GRAVITATIONAL_ACCELERATION
+        self.turn_radius = self.turn_speed**2 / turn_acceleration
+
+
+opti = asb.Opti()
+initialState = PlaneState(np.array([0,0,0]),np.array([20,0,0]),opti)
+finalState = PlaneState(np.array([20,20,0]),np.array([0,20,0]),opti)
+testSegment = TurnSegment(initialState, finalState, opti)

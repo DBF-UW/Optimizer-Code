@@ -10,7 +10,7 @@ max_M2_score = 2200
 max_M3_score = 2
 
 def GM (constants, aircraft:"aircraft.Aircraft"):
-    return ((1.95 * (aircraft.cargo + aircraft.passengers)) + 8) * constants.GM_TIME_FACTOR
+    return ((1.66 * (aircraft.cargo + aircraft.passengers)) + 11.57) * constants.GM_TIME_FACTOR
 
 def M1 (constants, aircraft:"aircraft.Aircraft", lapper:"simple_lap_simulator.LapSimulator") -> float:
     return 1
@@ -29,7 +29,7 @@ def M2 (constants, aircraft:"aircraft.Aircraft", lapper:"simple_lap_simulator.La
     Ce = constants.BASE_OPERATING_COST
     Cp = constants.PER_PASSENGER_COST
     Cc = constants.PER_CARGO_COST
-    efficiencyFactor = aircraft.propulsion_energy / (3600*100)
+    efficiencyFactor = lapper.propulsion_energy / (3600*100)
 
     income = (passengers * (Ip1 + (Ip2 * laps)) + cargo * (Ic1 + (Ic2 * laps)))
     cost = laps * (Ce + (passengers * Cp) + (cargo * Cc)) * efficiencyFactor

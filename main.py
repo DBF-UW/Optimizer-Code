@@ -19,9 +19,8 @@ M2_score = mission_sim.M2(constants, mantaRay, M2lapper)
 M3_score = mission_sim.M3(constants, mantaRay, M3lapper)
 GM_score = mission_sim.GM(constants, mantaRay)
 
-MAX_PASSENGERS = 50
+MAX_PASSENGERS = 55
 opti.subject_to([mantaRay.passengers < MAX_PASSENGERS])
-#Sopti.subject_to([mantaRay.passengers > 25])
 #find and save score for best GM airplane
 opti.minimize(GM_score)  
 solution1 = opti.solve(verbose=False)
@@ -29,7 +28,6 @@ GM_min_score = solution1.value(GM_score)
 print("GM min score is:", GM_min_score)
 
 #find and save score for best M2 airplane
-#CURRENTLY HARDCODED M2 MAX SCORE
 opti.maximize(M2_score) 
 solution2 = opti.solve(verbose=False)
 M2_max_score = solution2.value(M2_score)
@@ -42,14 +40,43 @@ solution3 = opti.solve(verbose=False)
 M3_max_score = solution3.value(M3_score)
 print("M3 max score is:", M3_max_score)
 
+'''
+for i in np.arange(10):
+    oppositeWeighting = 0.2
+    gmWeighting = 0.2
+    #to achieve more realistic view of competor's aircraft, weight the airplanes with a 80-20 bias to M2 and M3, rather than an all or nothing.
+    M2_bias_score = 1*(M2_score/M2_max_score) + oppositeWeighting*(M3_score/M3_max_score) + gmWeighting * (GM_min_score/GM_score)
+    M3_bias_score = oppositeWeighting*(M2_score/M2_max_score) + 1*(M3_score/M3_max_score) + gmWeighting * (GM_min_score/GM_score)
+
+    #find and save best M2 biased score
+    opti.maximize(M2_bias_score)
+    solution1 = opti.solve(verbose = False)
+    M2_max_score = solution1.value(M2_score)
+
+    print('Iteration: ', i, '| M2 max score:', M2_max_score)
+    print('Iteration: ', i, '| Passengers:', solution1.value(mantaRay.passengers))
+    print('Iteration: ', i, '| Banner:', solution1.value(mantaRay.banner_length))
+    print('-------------------------------------------------')
+    #find and save best M3 biased score
+
+    opti.maximize(M3_bias_score)
+    solution2 = opti.solve(verbose=False)
+    M3_max_score = solution2.value(M3_score)
+    print('Iteration: ', i, '| M3 max score:', M3_max_score)
+    print('Iteration: ', i, '| Passengers:', solution2.value(mantaRay.passengers))
+    print('Iteration: ', i, '| Banner:', solution2.value(mantaRay.banner_length))
+    print('-------------------------------------------------')
+    print('')
+  
+'''
 #normalized score equation
 score = GM_min_score/GM_score + (1+ M2_score/M2_max_score) + (2+M3_score/M3_max_score) + 1
 
-test_vals = np.arange(3,80)
+test_vals = np.arange(3, MAX_PASSENGERS+1)
 sols = []
 
 for i in test_vals:
-    print("Trying: ", i)
+    #print("Trying: ", i)
     
     opti.maximize(score - 400*(mantaRay.passengers-i)**2)
 
@@ -76,8 +103,8 @@ def makeOptimizerPlot(sols, test_vals, x_variable, y_variable, x_name, y_name):
 
 def bestAirplane(opti):
     opti.maximize(score)
-    opti.subject_to([mantaRay.passengers  < 44])
-    #opti.subject_to([mantaRay.passengers > 40])
+    #opti.subject_to([mantaRay.passengers  < MAX_PASSENGERS/2])
+    opti.subject_to([mantaRay.passengers > MAX_PASSENGERS/2])
     solution = opti.solve(verbose=False)
 
     label_width = 25  # Adjust as needed
@@ -101,7 +128,6 @@ def bestAirplane(opti):
     print(f"{'Wing Area (m^2):':<{label_width}} {solution.value(mantaRay.wing_area):.2f}")
     print(f"{'Flight Mass (kg):':<{label_width}} {solution.value(mantaRay.flight_mass):.2f}")
     print(f"{'Payload Mass (kg):':<{label_width}} {solution.value(mantaRay.payload_mass):.2f}")
-    print(f"{'Battery Energy (Wh):':<{label_width}} {solution.value(mantaRay.propulsion_energy/3600):.2f}")
     print(f"{'Vertical Stab Area (m^2):':<{label_width}} {solution.value(mantaRay.v_stab_area):.2f}")
     print(f"{'Horizontal Stab Area (m^2):':<{label_width}} {solution.value(mantaRay.h_stab_area):.2f}")
     print(f"{'CD0:':<{label_width}} {solution.value(mantaRay.CD0):.4f}")

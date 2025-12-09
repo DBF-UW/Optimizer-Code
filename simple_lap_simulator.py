@@ -9,6 +9,10 @@ class LapSimulator:
     #optimizer is allowed to decide radius and speed for turns and straights. 
     #This is used to compute lap time and energy consumption, which is fed back to optimizer and constraints for iteration.
     def __init__(self, opti:asb.Opti, aircraft, constants:design_constants.constants_holder, payload:bool, banner:bool):
+
+        # AP Parameters
+        self.propulsion_energy = opti.variable(init_guess=constants.BATTERY_ENERGY * 3600) #Joules
+
         self.straight_speed = opti.variable(init_guess=40, lower_bound=0) #m/s
         self.turn_speed = opti.variable(init_guess=40, lower_bound = 0) #m/s
         self.turn_load_factor = opti.variable(init_guess=4, lower_bound=1.5) #g's
@@ -31,7 +35,7 @@ class LapSimulator:
 
         self.lap_energy = (self.straight_drag * (2 * leg_length) + turn_drag * (4 * np.pi * self.turn_radius)) / constants.PROPULSION_EFFICIENCY #Joules
         self.lap_time = (2 * leg_length / self.straight_speed) + (4*np.pi*self.turn_radius/self.turn_speed) #seconds
-        self.laps_flown = aircraft.propulsion_energy / self.lap_energy
+        self.laps_flown = self.propulsion_energy / self.lap_energy
         self.energy_used = self.lap_energy * self.laps_flown #Joules
         self.total_time = self.laps_flown * self.lap_time #seconds
         
@@ -46,11 +50,13 @@ class LapSimulator:
             self.laps_flown >= 3,
             self.turn_speed >= 20,
             self.straight_speed >= 20,
+            #self.turn_power <= self.straight_power + 200,
             self.straight_speed <= 22,
             self.turn_radius <= 30,
             self.turn_load_factor < 6.5,
             self.straight_speed <= self.turn_speed + 8,
-            self.lap_energy*self.laps_flown <= aircraft.propulsion_energy, #total energy used must be less than battery energy
+            self.lap_energy*self.laps_flown <= self.propulsion_energy, #total energy used must be less than battery energy
+            self.propulsion_energy <= 3600*100, #max 100wh battery
             self.lap_time*self.laps_flown <= 300, #5 minute flight time
         ])
     

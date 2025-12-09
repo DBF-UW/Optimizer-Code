@@ -61,25 +61,24 @@ class Aircraft:
         self.v_stab_area = rudder_volume_coefficient * self.wing_area * self.span / self.tail_arm
 
         #Drag Parameters
-        self.fuselageCD0 = self.getFuselageCD0(constants, 45, self.wing_area) * constants.PARASITIC_DRAG_FACTOR     
+        self.fuselageCD0 = self.getFuselageCD0(constants, 45, self.wing_area) * constants.PARASITIC_DRAG_FACTOR * 2 
         self.CD_banner = 0.021 * 0.78 * constants.BANNER_CD_FACTOR
         self.CD0_wing = 0.02 * constants.PARASITIC_DRAG_FACTOR
         self.CD_tail = 0.02 * constants.PARASITIC_DRAG_FACTOR
         
 
-        # AP Parameters
-        self.propulsion_energy = opti.variable(init_guess=constants.BATTERY_ENERGY * 3600) #Joules
+
  
         #Mass Calculations
         self.fuselage_mass = (2 * constants.CARBON_FIBER_DENSITY + constants.NOMEX_DENSITY) * self.fuselage_wetted_area
         self.wing_skin_mass = 2*((2 * constants.CARBON_FIBER_DENSITY + constants.NOMEX_DENSITY)) * self.wing_area
         self.payload_mass = (self.cargo*constants.CARGO_MASS + self.passengers*constants.PASSENGER_MASS) #kg
         self.structure_mass = self.payload_mass*0.1
-        self.battery_mass = self.propulsion_energy / constants.BATTERY_SPECIFIC_ENERGY #kg
+        self.battery_mass = 0.65 #kg
         self.banner_mass = constants.BANNER_SURFACE_DENSITY * (self.banner_length**2)/5 
-        self.motor_mass = 0.450 #kg
+        self.motor_mass = 0.550 #kg
         self.wiring_mass = 0.4 #kg
-        self.landing_gear_mass = 0.100 #kg
+        self.landing_gear_mass = 0.15 #kg
         self.flight_mass =  (self.battery_mass + 
                             self.fuselage_mass + 
                             self.wing_skin_mass +
@@ -102,9 +101,6 @@ class Aircraft:
             self.AR > 4, #minimum AR
             self.AR < 12, #maximum AR
 
-            #AP
-            self.propulsion_energy <= constants.BATTERY_ENERGY * 3600, #Battery energy limit
-            self.propulsion_energy >= 0, #Minimum battery energy
 
             #Fuselage
             self.fuselage_box_length < 2,
@@ -175,7 +171,7 @@ class Aircraft:
         CD_Fuselage = self.getFuselageCD0(constants, speed, S) 
 
         #Calculate Drag Forces
-        aircraft_drag =  Q * (S * (3* CD_Fuselage + CD_Wing) + (self.CD_tail * (self.h_stab_area + self.v_stab_area)))
+        aircraft_drag =  Q * (S * (CD_Fuselage + CD_Wing) + (self.CD_tail * (self.h_stab_area + self.v_stab_area)))
         banner_drag = Q * (self.CD_banner * self.banner_length**2)/5 ##investigate reynolds number effects on drag, using skin friction and also consider mast effects (look at naval architecture textbook)
         if banner:
             return aircraft_drag + banner_drag
