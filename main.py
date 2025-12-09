@@ -19,7 +19,7 @@ M2_score = mission_sim.M2(constants, mantaRay, M2lapper)
 M3_score = mission_sim.M3(constants, mantaRay, M3lapper)
 GM_score = mission_sim.GM(constants, mantaRay)
 
-MAX_PASSENGERS = 55
+MAX_PASSENGERS = 60
 opti.subject_to([mantaRay.passengers < MAX_PASSENGERS])
 #find and save score for best GM airplane
 opti.minimize(GM_score)  
@@ -103,8 +103,8 @@ def makeOptimizerPlot(sols, test_vals, x_variable, y_variable, x_name, y_name):
 
 def bestAirplane(opti):
     opti.maximize(score)
-    #opti.subject_to([mantaRay.passengers  < MAX_PASSENGERS/2])
-    opti.subject_to([mantaRay.passengers > MAX_PASSENGERS/2])
+    opti.subject_to([mantaRay.passengers  < MAX_PASSENGERS/2])
+    #opti.subject_to([mantaRay.passengers > MAX_PASSENGERS/2])
     solution = opti.solve(verbose=False)
 
     label_width = 25  # Adjust as needed
