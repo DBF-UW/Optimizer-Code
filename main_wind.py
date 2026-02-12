@@ -4,26 +4,23 @@ import matplotlib.pyplot as plt
 import design_constants
 import unit_conversion  as uc   
 import aircraft
-import constraints
-import simple_lap_simulator    
+import simple_wind_lap   
 import mission_sim
 
 #initialize objects
 opti = asb.Opti()
 constants = design_constants.constants_holder(opti) #this constants thing is an object so that the parameters in it can be manipulated.
 mantaRay = aircraft.Aircraft(opti, constants)
-M2lapper = simple_lap_simulator.LapSimulator(opti, mantaRay, constants, payload=True, banner=False)
-M3lapper = simple_lap_simulator.LapSimulator(opti, mantaRay, constants, payload=False, banner=True)
-constraints.constraints(opti, mantaRay, constants)
+M2lapper = simple_wind_lap.LapSimulator(opti, mantaRay, constants, payload=True, banner=False, cross_wind = 0, head_wind = 0)
+M3lapper = simple_wind_lap.LapSimulator(opti, mantaRay, constants, payload=False, banner=True, cross_wind = 0, head_wind = 0)
 
 #calculate mission scores
 M2_score = mission_sim.M2(constants, mantaRay, M2lapper) 
 M3_score = mission_sim.M3(constants, mantaRay, M3lapper)
 GM_score = mission_sim.GM(constants, mantaRay)
 
-MAX_PASSENGERS = 80
+MAX_PASSENGERS = 50
 opti.subject_to([mantaRay.passengers < MAX_PASSENGERS])
-#Sopti.subject_to([mantaRay.passengers > 25])
 #find and save score for best GM airplane
 opti.minimize(GM_score)  
 solution1 = opti.solve(verbose=False)
@@ -36,39 +33,78 @@ solution2 = opti.solve(verbose=False)
 M2_max_score = solution2.value(M2_score)
 print("M2 max score is:", M2_max_score)
 
+
 #find and save score for best M3 airplane
 opti.maximize(M3_score) 
 solution3 = opti.solve(verbose=False)
 M3_max_score = solution3.value(M3_score)
 print("M3 max score is:", M3_max_score)
 
+'''
+for i in np.arange(10):
+    oppositeWeighting = 0.2
+    gmWeighting = 0.2
+    #to achieve more realistic view of competor's aircraft, weight the airplanes with a 80-20 bias to M2 and M3, rather than an all or nothing.
+    M2_bias_score = 1*(M2_score/M2_max_score) + oppositeWeighting*(M3_score/M3_max_score) + gmWeighting * (GM_min_score/GM_score)
+    M3_bias_score = oppositeWeighting*(M2_score/M2_max_score) + 1*(M3_score/M3_max_score) + gmWeighting * (GM_min_score/GM_score)
+
+    #find and save best M2 biased score
+    opti.maximize(M2_bias_score)
+    solution1 = opti.solve(verbose = False)
+    M2_max_score = solution1.value(M2_score)
+
+    print('Iteration: ', i, '| M2 max score:', M2_max_score)
+    print('Iteration: ', i, '| Passengers:', solution1.value(mantaRay.passengers))
+    print('Iteration: ', i, '| Banner:', solution1.value(mantaRay.banner_length))
+    print('-------------------------------------------------')
+    #find and save best M3 biased score
+
+    opti.maximize(M3_bias_score)
+    solution2 = opti.solve(verbose=False)
+    M3_max_score = solution2.value(M3_score)
+    print('Iteration: ', i, '| M3 max score:', M3_max_score)
+    print('Iteration: ', i, '| Passengers:', solution2.value(mantaRay.passengers))
+    print('Iteration: ', i, '| Banner:', solution2.value(mantaRay.banner_length))
+    print('-------------------------------------------------')
+    print('')
+  
+'''
 #normalized score equation
-score = constants.REPORT_SCORE_FACTOR * (GM_min_score/GM_score + (1+ M2_score/M2_max_score) + (2+M3_score/M3_max_score) + 1)
+score = GM_min_score/GM_score + (1+ M2_score/M2_max_score) + (2+M3_score/M3_max_score) + 1
 
-#now that max scores have been made, constrain to our known solution space (3 passengers)
-opti.subject_to([mantaRay.passengers < 3])
+test_vals = np.arange(3, MAX_PASSENGERS+1)
+sols = []
 
-def sensitivitySweep(sweep_variable, center_value, percent_sweep):
-    test_range = np.arange(-percent_sweep, percent_sweep + 1)
-    scores = []
+for i in test_vals:
+    #print("Trying: ", i)
+    
+    opti.maximize(score - 400*(mantaRay.passengers-i)**2)
 
-    opti.set_value(sweep_variable, center_value)
-    opti.maximize(score)
-    base_score = opti.solve(verbose = False).value(score)
+    try:
+        sol = opti.solve(verbose=False)
+    except RuntimeError as e:   # CasADi solver error
+        print(f"Solver failed for passengers: {i}")
+        score = 0
+    
+    sols.append(sol)
 
-    for i in test_range:
-        modifier = 1 + i/100
-        opti.set_value(sweep_variable, center_value * modifier)
-        opti.maximize(score)
-        print("Trying modifier = ", modifier)
-        scores.append(opti.solve(verbose = False).value(score))
-    scores = np.array(scores)
-    scores = ((scores-base_score)/base_score)*100
-    return scores
+
+def makeOptimizerPlot(sols, test_vals, x_variable, y_variable, x_name, y_name):
+    x_vals = []
+    y_vals = []
+    for i in np.arange(len(test_vals)):
+        x_vals.append(sols[i].value(x_variable))
+        y_vals.append(sols[i].value(y_variable))
+    plt.plot(x_vals, y_vals, marker="o")
+    plt.xlabel(x_name)
+    plt.ylabel(y_name)
+    plt.grid(True)
+    plt.show()
 
 def bestAirplane(opti):
-    
     opti.maximize(score)
+    opti.subject_to([mantaRay.passengers  < MAX_PASSENGERS/2])
+    #opti.subject_to([mantaRay.passengers > MAX_PASSENGERS/2])
     solution = opti.solve(verbose=False)
 
     label_width = 25  # Adjust as needed
@@ -107,16 +143,12 @@ def bestAirplane(opti):
     print(f"{'Total Time (s):':<{label_width}} {solution.value(M2lapper.total_time):.2f}")
     print(f"{'Total Energy Used (Wh):':<{label_width}} {solution.value(M2lapper.energy_used/3600):.2f}")
     print(f"{'Turn Power (W):':<{label_width}} {solution.value(M2lapper.turn_power):.2f}")
-    print(f"{'Straight Power (W):':<{label_width}} {solution.value(M2lapper.straight_power):.2f}")
     print(f"{'Lap Time (s):':<{label_width}} {solution.value(M2lapper.lap_time):.2f}")
-    print(f"{'Straight Speed (m/s):':<{label_width}} {solution.value(M2lapper.straight_speed):.2f}")
     print(f"{'Turn Speed (m/s):':<{label_width}} {solution.value(M2lapper.turn_speed):.2f}")
     print(f"{'Turn Load Factor (g):':<{label_width}} {solution.value(M2lapper.turn_load_factor):.2f}")
     print(f"{'Turn Radius (m):':<{label_width}} {solution.value(M2lapper.turn_radius):.2f}")
     print(f"{'Turn CL:':<{label_width}} {solution.value(M2lapper.turn_CL):.2f}")
     print(f"{'Turn L/D:':<{label_width}} {solution.value(M2lapper.turn_L_D):.2f}")
-    print(f"{'Straight CL:':<{label_width}} {solution.value(M2lapper.straight_CL):.2f}")
-    print(f"{'Straight L/D:':<{label_width}} {solution.value(M2lapper.straight_L_D):.2f}")
 
     print("")
     print("------------------- Mission 3 Parameters -------------------")
@@ -125,54 +157,32 @@ def bestAirplane(opti):
     print(f"{'Total Time (s):':<{label_width}} {solution.value(M3lapper.total_time):.2f}")
     print(f"{'Total Energy Used (Wh):':<{label_width}} {solution.value(M3lapper.energy_used/3600):.2f}")
     print(f"{'Lap Time (s):':<{label_width}} {solution.value(M3lapper.lap_time):.2f}")
-    print(f"{'Straight Speed (m/s):':<{label_width}} {solution.value(M3lapper.straight_speed):.2f}")
-    print(f"{'Straight Drag (N):':<{label_width}} {solution.value(M3lapper.straight_drag):.2f}")
+    print(f"{'Upwind Air Speed (m/s):':<{label_width}} {solution.value(M3lapper.upwind_airspeed):.2f}")
+    print(f"{'Downwind Air Speed (m/s):':<{label_width}} {solution.value(M3lapper.downwind_airspeed):.2f}")
+    print(f"{'Straight Drag (N):':<{label_width}} {solution.value(M3lapper.upwind_drag):.2f}")
     print(f"{'Turn Power (W):':<{label_width}} {solution.value(M3lapper.turn_power):.2f}")
-    print(f"{'Straight Power (W):':<{label_width}} {solution.value(M3lapper.straight_power):.2f}")
     print(f"{'Turn Speed (m/s):':<{label_width}} {solution.value(M3lapper.turn_speed):.2f}")
     print(f"{'Turn Load Factor (g):':<{label_width}} {solution.value(M3lapper.turn_load_factor):.2f}")
     print(f"{'Turn Radius (m):':<{label_width}} {solution.value(M3lapper.turn_radius):.2f}")
-    print(f"{'Straight CL:':<{label_width}} {solution.value(M3lapper.straight_CL):.2f}")
     print(f"{'Turn CL:':<{label_width}} {solution.value(M3lapper.turn_CL):.2f}")
     print(f"{'Banner Length (m):':<{label_width}} {solution.value(mantaRay.banner_length):.2f}")
     print(f"{'Banner Mass (kg):':<{label_width}} {solution.value(mantaRay.banner_mass):.2f}")
     print("")
     print("------------------------------------------------------------")
 
-driving_parameters = [
-    constants.PROPULSION_EFFICIENCY_FACTOR,
-    constants.STRUCTURES_EXECUTION_FACTOR,
-    constants.FUSELAGE_PACKING_FACTOR,
-    constants.PARASITIC_DRAG_FACTOR,
-    constants.BANNER_CD_FACTOR,
-    constants.OSWALD_EFFICIENCY_FACTOR,
-    constants.GM_TIME_FACTOR,
-    constants.CL_MAX_FACTOR,
-]
 
-labels = [
-    "Propulsion Efficiency",
-    "Aircraft Weight",
-    "Fuselage Size",
-    "Parasitic Drag",
-    "Banner Drag",
-    "Oswald Efficiency",
-    "Ground Mission Time",
-    "Cl Max",
-]
+#makeOptimizerPlot(sols, test_vals, mantaRay.fuselage_length)
+#makeOptimizerPlot(sols, test_vals, mantaRay.fuselageCD0)
 
-percent_sweep = 25
-x_vals = np.arange(-percent_sweep, percent_sweep + 1)
+bestAirplane(opti)
 
-for i in np.arange(0, len(driving_parameters)):
-    parameter = driving_parameters[i]
-    label = labels[i]
-    plt.plot(x_vals, sensitivitySweep(parameter, 1, percent_sweep), label = label)
+#makeOptimizerPlot(sols, test_vals, M2lapper.turn_load_factor, score, "Max G", "Score")
+#makeOptimizerPlot(sols, test_vals, M2lapper.turn_load_factor, M2lapper.lap_time, "Max G", "Lap Time")
+makeOptimizerPlot(sols, test_vals, mantaRay.passengers, score, "Passenger Count", "Score")
 
-
-plt.xlabel("Percent Change In Variable")
-plt.ylabel("Percent Change In Score")
-plt.grid(True)
-plt.legend(loc="upper left", bbox_to_anchor=(1.05, 1))
-plt.tight_layout()
-plt.show()
+'''
+makeOptimizerPlot(sols, test_vals, M2lapper.lap_time)
+makeOptimizerPlot(sols, test_vals, M2lapper.straight_speed)
+makeOptimizerPlot(sols, test_vals, M2_score)
+makeOptimizerPlot(sols, test_vals, M3_score)
+'''

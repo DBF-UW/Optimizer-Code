@@ -40,6 +40,6 @@ def M2 (constants, aircraft:"aircraft.Aircraft", lapper:"simple_lap_simulator.La
 def M3 (constants, aircraft:"aircraft.Aircraft", lapper:"simple_lap_simulator.LapSimulator") -> float:
     RAC = 0.05 * aircraft.span + 0.75
     laps = lapper.laps_flown
-    banner_length = aircraft.banner_length
+    banner_length = aircraft.banner_length * 39.37
     score = (banner_length * laps) / RAC
     return score

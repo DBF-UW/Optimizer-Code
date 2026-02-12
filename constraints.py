@@ -55,10 +55,6 @@ def constraints(opti:asb.Opti, aircraft:"Aircraft", constants:design_constants.c
         AR > 4, #minimum AR
         AR < 12, #maximum AR
 
-        #AP
-        propulsion_energy <= constants.BATTERY_ENERGY * 3600, #Battery energy limit
-        propulsion_energy >= 0, #Minimum battery energy
-
         #Fuselage
         fuselage_box_length < 2,
         fuselage_box_length > 0.07,

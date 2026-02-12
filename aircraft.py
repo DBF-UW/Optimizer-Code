@@ -171,7 +171,7 @@ class Aircraft:
         CD_Fuselage = self.getFuselageCD0(constants, speed, S) 
 
         #Calculate Drag Forces
-        aircraft_drag =  Q * (S * (CD_Fuselage + CD_Wing) + (self.CD_tail * (self.h_stab_area + self.v_stab_area)))
+        aircraft_drag =  Q * (S * (CD_Fuselage + CD_Wing) + (self.CD_tail * (self.h_stab_area + self.v_stab_area))) + 1 #extra 1N is for fixed gear
         banner_drag = Q * (self.CD_banner * self.banner_length**2)/5 ##investigate reynolds number effects on drag, using skin friction and also consider mast effects (look at naval architecture textbook)
         if banner:
             return aircraft_drag + banner_drag
